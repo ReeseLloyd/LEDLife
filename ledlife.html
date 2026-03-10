@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEDLife v0.15</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-color: #111114;
+            --panel-bg: #0e0e11;
+            --text-color: #cccccc;
+            --accent-color: #39ff14;
+            --border-color: #1e1e28;
+        }
+
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 0.75rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #888;
+        }
+
+        header h1 span {
+            color: var(--accent-color);
+            text-shadow: 0 0 8px var(--accent-color), 0 0 20px rgba(57,255,20,0.4);
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────── */
+        .controls {
+            width: 260px;
+            min-width: 260px;
+            padding: 0;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .controls-inner {
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        /* ── Collapsible section headers ─────────────────────── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            padding: 0.15rem 0;
+        }
+
+        .section-header:hover .section-title {
+            opacity: 1;
+        }
+
+        .section-toggle {
+            font-size: 0.55rem;
+            color: #333;
+            transition: transform 0.2s, color 0.2s;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .section-header:hover .section-toggle {
+            color: #555;
+        }
+
+        .section-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            overflow: hidden;
+        }
+
+        .section-body.collapsed {
+            display: none;
+        }
+
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .section-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent-color);
+            opacity: 0.7;
+            margin-top: 0.2rem;
+        }
+
+        .separator { border: none; border-top: 1px solid var(--border-color); }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-group label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #555;
+        }
+
+        .control-group .value {
+            font-size: 0.72rem;
+            color: #888;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .control-group input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 3px;
+            background: #1e1e28;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            box-shadow: 0 0 4px rgba(57,255,20,0.6);
+            cursor: pointer;
+        }
+
+        .control-group input[type="number"],
+        .control-group select {
+            background: #0a0a0d;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.35rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            width: 100%;
+        }
+
+        .control-group input[type="number"]:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 4px rgba(57,255,20,0.3);
+        }
+
+        .checkbox-group {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--accent-color);
+            width: 13px;
+            height: 13px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            text-transform: none;
+            letter-spacing: 0;
+            font-size: 0.78rem;
+            color: #888;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--accent-color);
+            background: transparent;
+            color: var(--accent-color);
+            font-size: 0.82rem;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 6px rgba(57,255,20,0.4);
+            box-shadow: 0 0 6px rgba(57,255,20,0.1);
+            cursor: pointer;
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+
+        button:hover {
+            background: rgba(57,255,20,0.08);
+            box-shadow: 0 0 10px rgba(57,255,20,0.25);
+        }
+
+        button.btn-secondary {
+            border-color: #333;
+            color: #666;
+            text-shadow: none;
+            box-shadow: none;
+        }
+
+        button.btn-secondary:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 6px rgba(57,255,20,0.15);
+        }
+
+        button.active-btn {
+            background: rgba(57,255,20,0.12);
+            box-shadow: 0 0 10px rgba(57,255,20,0.3);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .btn-row button { flex: 1; }
+
+        /* ── Stats panel ──────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem;
+        }
+
+        .stat-box {
+            background: #0a0a0d;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.4rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #444;
+        }
+
+        .stat-value {
+            font-size: 0.88rem;
+            font-variant-numeric: tabular-nums;
+            color: var(--accent-color);
+            text-shadow: 0 0 6px rgba(57,255,20,0.3);
+        }
+
+        .stat-value.dim { color: #555; text-shadow: none; }
+
+        /* (pop-chart replaced by chart-strategy + chart-hue) */
+
+        /* (genome-panel styles moved to focus/genome section below) */
+
+        /* ── Display area ─────────────────────────────────────── */
+        .display-area {
+            flex: 1;
+            overflow: hidden;
+            background: var(--bg-color);
+            position: relative;
+        }
+
+        #life-canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            transform-origin: 0 0;
+            /* zoom/pan applied via JS transform */
+        }
+
+        .display-area.panning { cursor: grabbing !important; }
+        .display-area.panning #life-canvas { cursor: grabbing !important; }
+
+        /* Zoom level hint — appears briefly on scroll, fades */
+        .zoom-hint {
+            position: absolute;
+            bottom: 0.6rem;
+            left: 0.8rem;
+            font-size: 0.65rem;
+            color: #3a3a50;
+            letter-spacing: 0.08em;
+            pointer-events: none;
+            user-select: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .zoom-hint.visible { opacity: 1; transition: none; }
+
+        /* Generation counter overlay */
+        .gen-overlay {
+            position: absolute;
+            bottom: 0.6rem;
+            right: 0.8rem;
+            font-size: 0.65rem;
+            color: #2a2a35;
+            letter-spacing: 0.08em;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Tooltip for clicked organism */
+        .tooltip {
+            position: absolute;
+            background: rgba(10,10,14,0.92);
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 0.5rem 0.65rem;
+            font-size: 0.68rem;
+            color: #888;
+            line-height: 1.8;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            max-width: 180px;
+        }
+
+        /* ── Chart labels & legend ───────────────────────────────────── */
+        .chart-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.2rem;
+        }
+
+        .chart-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #333;
+        }
+
+        .chart-legend {
+            font-size: 0.6rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-left: 0.3rem;
+            flex-shrink: 0;
+        }
+
+        #chart-strategy, #chart-hue {
+            width: 100%;
+            height: 52px;
+            border-radius: 3px;
+            border: 1px solid var(--border-color);
+            background: #0a0a0d;
+            display: block;
+        }
+
+        /* ── Ecology presets ─────────────────────────────────────────── */
+        .ecology-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.35rem;
+        }
+
+        .ecology-btn {
+            padding: 0.4rem 0.3rem;
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
+            border: 1px solid #252530;
+            background: #0d0d12;
+            color: #555;
+            text-shadow: none;
+            box-shadow: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .ecology-btn:hover {
+            color: #999;
+            border-color: #444;
+            background: #111118;
+            box-shadow: none;
+        }
+
+        .ecology-btn.active {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: rgba(57,255,20,0.06);
+            box-shadow: 0 0 6px rgba(57,255,20,0.12);
+            text-shadow: 0 0 6px rgba(57,255,20,0.3);
+        }
+
+        .ecology-btn .eco-icon { font-size: 1rem; display: block; margin-bottom: 0.1rem; }
+        .ecology-btn .eco-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* ── Movement mode toggle ────────────────────────────────────── */
+        .movement-toggle {
+            display: flex;
+            border: 1px solid #1e1e28;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .movement-btn {
+            flex: 1;
+            padding: 0.38rem 0.2rem;
+            font-size: 0.66rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 0;
+            background: #0a0a0d;
+            color: #444;
+            text-shadow: none;
+            box-shadow: none;
+            cursor: pointer;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .movement-btn + .movement-btn {
+            border-left: 1px solid #1e1e28;
+        }
+
+        .movement-btn:hover { color: #888; background: #0f0f14; box-shadow: none; }
+
+        .movement-btn.active {
+            background: rgba(57,255,20,0.08);
+            color: var(--accent-color);
+            text-shadow: 0 0 6px rgba(57,255,20,0.35);
+        }
+
+        /* ── Ecology description hint ────────────────────────────────── */
+        .ecology-hint {
+            font-size: 0.64rem;
+            color: #333;
+            line-height: 1.5;
+            min-height: 2.2em;
+            padding: 0.1rem 0;
+        }
+
+        .btn-icon-small {
+            width: auto;
+            padding: 0.1rem 0.4rem;
+            font-size: 0.85rem;
+            line-height: 1;
+            border-radius: 3px;
+            min-width: unset;
+        }
+
+        .credit {
+            font-size: 0.68rem;
+            color: #2a2a35;
+            text-align: center;
+            padding-top: 0.2rem;
+        }
+
+        /* ── Weather, Pathogen, Catastrophe UI ──────────────────────── */
+
+        /* Canvas weather overlay (top-left of display area) */
+        .weather-overlay {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.7rem;
+            font-size: 0.62rem;
+            color: #3a3a50;
+            letter-spacing: 0.06em;
+            pointer-events: none;
+            user-select: none;
+            line-height: 1.7;
+        }
+        .weather-overlay .w-icon { font-size: 1rem; vertical-align: middle; }
+        .weather-overlay .w-bar-wrap {
+            display: inline-block;
+            width: 40px;
+            height: 4px;
+            background: #1a1a24;
+            border-radius: 2px;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+        .weather-overlay .w-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.4s;
+        }
+
+        /* Event log */
+        .event-log {
+            background: #080810;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.3rem 0.45rem;
+            font-size: 0.62rem;
+            color: #444;
+            line-height: 1.7;
+            min-height: 3.5rem;
+            max-height: 5.5rem;
+            overflow-y: auto;
+            font-family: inherit;
+        }
+        .event-log .ev-weather  { color: #5588bb; }
+        .event-log .ev-pathogen { color: #bb5588; }
+        .event-log .ev-fire     { color: #cc6622; }
+        .event-log .ev-meteor   { color: #8855cc; }
+        .event-log .ev-tick     { color: #333; font-size: 0.58rem; }
+
+        /* Catastrophe buttons */
+        .cata-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.35rem;
+        }
+        .cata-btn {
+            padding: 0.38rem 0.3rem;
+            font-size: 0.7rem;
+            border: 1px solid #252530;
+            background: #0d0d12;
+            color: #555;
+            text-shadow: none;
+            box-shadow: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+            text-align: center;
+        }
+        .cata-btn:hover { color: #999; border-color: #444; background: #111118; box-shadow: none; }
+        .cata-btn.active-event {
+            border-color: #cc6622;
+            color: #ff9944;
+            box-shadow: 0 0 6px rgba(204,102,34,0.3);
+        }
+
+        /* Pathogen outbreak button */
+        .pathogen-btn {
+            width: 100%;
+            margin-top: 0.3rem;
+            padding: 0.38rem;
+            font-size: 0.7rem;
+            border: 1px solid #252530;
+            background: #0d0d12;
+            color: #555;
+            text-shadow: none;
+            box-shadow: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+        }
+        .pathogen-btn:hover { color: #cc77aa; border-color: #663355; background: #110a10; box-shadow: none; }
+        .pathogen-btn.active-event {
+            border-color: #bb5588;
+            color: #ff88cc;
+            box-shadow: 0 0 6px rgba(187,85,136,0.3);
+        }
+
+        /* Fire scorched cell rendering handled in JS canvas */
+
+        body.focus-mode .weather-overlay { color: #555; }
+
+        /* ── Focus mode ──────────────────────────────────────────────── */
+
+        /* Enter focus button — always visible, top-right */
+        .focus-enter-btn {
+            position: fixed;
+            top: 0.6rem;
+            right: 0.75rem;
+            z-index: 200;
+            width: 2.2rem;
+            height: 2.2rem;
+            min-width: unset;
+            padding: 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,10,13,0.5);
+            border: 1px solid #282828;
+            color: #444;
+            text-shadow: none;
+            box-shadow: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        .focus-enter-btn:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background: rgba(10,10,13,0.85);
+            box-shadow: 0 0 8px rgba(57,255,20,0.25);
+        }
+
+        /* Focus mode overlay controls — hidden until focus mode active */
+        .focus-ctrl {
+            display: none;
+            position: fixed;
+            top: 0.6rem;
+            z-index: 300;
+            width: 2.2rem;
+            height: 2.2rem;
+            min-width: unset;
+            padding: 0;
+            font-size: 1rem;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,10,13,0.4);
+            border: 1px solid #222;
+            color: #444;
+            text-shadow: none;
+            box-shadow: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        body.focus-mode .focus-ctrl { display: flex; }
+        .focus-ctrl:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background: rgba(10,10,13,0.85);
+            box-shadow: 0 0 8px rgba(57,255,20,0.25);
+        }
+        .focus-ctrl.active {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background: rgba(10,10,13,0.7);
+            box-shadow: 0 0 8px rgba(57,255,20,0.3);
+        }
+
+        #focus-exit-btn  { right: 0.75rem; }
+        #focus-play-btn  { right: 3.25rem; }
+
+        /* In focus mode: hide header, sidebar, enter button */
+        body.focus-mode header,
+        body.focus-mode .controls,
+        body.focus-mode .focus-enter-btn { display: none; }
+
+        body.focus-mode .container { height: 100vh; }
+
+        body.focus-mode .display-area {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        body.focus-mode #life-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Gen overlay bumped up slightly so it's not clipped in focus */
+        body.focus-mode .gen-overlay {
+            color: #383845;
+            font-size: 0.72rem;
+        }
+
+        /* ── Genome inspector redesign ───────────────────────────────── */
+        .genome-panel {
+            background: #0a0a0d;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.55rem 0.6rem;
+            font-size: 0.7rem;
+            color: #555;
+            min-height: 60px;
+        }
+
+        .genome-empty { color: #333; font-size: 0.72rem; }
+
+        .genome-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid #1a1a24;
+        }
+
+        .genome-swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 5px currentColor;
+        }
+
+        .genome-strategy {
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            color: var(--accent-color);
+            text-shadow: 0 0 6px rgba(57,255,20,0.4);
+            flex: 1;
+        }
+
+        .genome-meta {
+            font-size: 0.62rem;
+            color: #333;
+            text-align: right;
+            line-height: 1.5;
+        }
+
+        .genome-section-label {
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #2e2e3a;
+            margin: 0.45rem 0 0.2rem;
+        }
+
+        .genome-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .genome-row-label {
+            width: 62px;
+            flex-shrink: 0;
+            color: #4a4a5a;
+            font-size: 0.66rem;
+        }
+
+        .genome-bar-wrap {
+            flex: 1;
+            height: 4px;
+            background: #1a1a24;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .genome-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.2s;
+        }
+
+        .genome-pct {
+            width: 28px;
+            text-align: right;
+            color: #666;
+            font-size: 0.64rem;
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
+        }
+
+        /* ── Floating genome inspector (focus mode) ──────────────────── */
+        .float-inspector {
+            display: none;
+            position: fixed;
+            z-index: 350;
+            min-width: 210px;
+            max-width: 240px;
+            background: rgba(10, 10, 14, 0.92);
+            border: 1px solid #2a2a3a;
+            border-radius: 6px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(57,255,20,0.05);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            overflow: hidden;
+            /* dragging is handled by JS; initial position set on open */
+        }
+
+        /* Show float inspector whenever visible class is set */
+        .float-inspector.visible {
+            display: block;
+        }
+
+        .float-inspector-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.35rem 0.5rem 0.35rem 0.65rem;
+            background: rgba(20,20,28,0.95);
+            border-bottom: 1px solid #1e1e2a;
+            cursor: grab;
+            user-select: none;
+        }
+        .float-inspector-header:active { cursor: grabbing; }
+
+        .float-inspector-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #3a3a50;
+        }
+
+        .float-inspector-close {
+            width: 1.5rem;
+            height: 1.5rem;
+            min-width: unset;
+            padding: 0;
+            font-size: 0.75rem;
+            background: transparent;
+            border: 1px solid #2a2a38;
+            color: #444;
+            text-shadow: none;
+            box-shadow: none;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .float-inspector-close:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .float-inspector-body {
+            padding: 0.4rem 0.55rem 0.55rem;
+            /* reuse all .genome-* styles */
+        }
+
+        /* Shrink section labels slightly inside the float panel */
+        .float-inspector-body .genome-section-label {
+            margin-top: 0.35rem;
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .controls { width: 100%; min-width: auto; max-height: 45vh; border-right: none; border-bottom: 1px solid var(--border-color); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>LED<span>Life</span> <span style="color:#333;font-size:0.65em;letter-spacing:0.05em">v0.15</span></h1>
+</header>
+
+<div class="container">
+    <!-- ── Sidebar ──────────────────────────────────── -->
+    <aside class="controls">
+      <div class="controls-inner">
+
+        <!-- Always-visible: Simulation controls -->
+        <div class="section-header" data-section="simulation">
+            <span class="section-title">Simulation</span>
+            <span class="section-toggle" id="toggle-simulation">▾</span>
+        </div>
+        <div class="section-body" id="section-simulation">
+
+        <div class="btn-row">
+            <button id="btn-start">▶ Start</button>
+            <button id="btn-reset" class="btn-secondary">↺ Reset</button>
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-speed">Speed</label>
+                <span class="value" id="val-speed">30</span>
+            </div>
+            <input type="range" id="sl-speed" min="1" max="120" value="30">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="inp-seed">Seed</label>
+                <button id="btn-rand-seed" class="btn-icon-small btn-secondary" title="Random seed">🎲</button>
+            </div>
+            <input type="number" id="inp-seed" placeholder="random" min="0" max="9999999">
+        </div>
+
+        <button id="btn-rand-all" class="btn-secondary" title="Randomize population, solar, mutation rate, and lifespan">🎰 Randomize Parameters</button>
+
+        </div><!-- /section-simulation -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="world">
+            <span class="section-title">World</span>
+            <span class="section-toggle" id="toggle-world">▾</span>
+        </div>
+        <div class="section-body" id="section-world">
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-cols">Grid Width</label>
+                <span class="value" id="val-cols">100</span>
+            </div>
+            <input type="range" id="sl-cols" min="20" max="200" value="100" step="4">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-rows">Grid Height</label>
+                <span class="value" id="val-rows">100</span>
+            </div>
+            <input type="range" id="sl-rows" min="20" max="200" value="100" step="2">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-pop">Initial Population</label>
+                <span class="value" id="val-pop">300</span>
+            </div>
+            <input type="range" id="sl-pop" min="10" max="1000" value="300" step="10">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-solar">Solar Intensity</label>
+                <span class="value" id="val-solar">0.15</span>
+            </div>
+            <input type="range" id="sl-solar" min="0.02" max="0.5" value="0.15" step="0.01">
+        </div>
+
+        </div><!-- /section-world -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="ecology">
+            <span class="section-title">Starting Ecology</span>
+            <span class="section-toggle" id="toggle-ecology">▾</span>
+        </div>
+        <div class="section-body" id="section-ecology">
+
+        <div class="ecology-grid">
+            <button class="ecology-btn active" data-ecology="soup" title="Fully random genomes — pure evolutionary chaos">
+                <span class="eco-icon">🧫</span>
+                <span class="eco-label">Primordial Soup</span>
+            </button>
+            <button class="ecology-btn" data-ecology="garden" title="Photosynthesizer-heavy, low predation — lush and stable">
+                <span class="eco-icon">🌱</span>
+                <span class="eco-label">Garden</span>
+            </button>
+            <button class="ecology-btn" data-ecology="battleground" title="Predators and prey seeded in balance — arms race dynamics">
+                <span class="eco-icon">⚔️</span>
+                <span class="eco-label">Battleground</span>
+            </button>
+            <button class="ecology-btn" data-ecology="commune" title="Kin-tolerant cooperators — clustering and mutualism">
+                <span class="eco-icon">🤝</span>
+                <span class="eco-label">Commune</span>
+            </button>
+        </div>
+        <div class="ecology-hint" id="ecology-hint">Fully random starting genomes — anything can happen.</div>
+
+        </div><!-- /section-ecology -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="movement">
+            <span class="section-title">Movement Mode</span>
+            <span class="section-toggle" id="toggle-movement">▾</span>
+        </div>
+        <div class="section-body" id="section-movement">
+
+        <div class="movement-toggle">
+            <button class="movement-btn" data-movement="fixed" title="No movement — organisms spread by reproduction only (CA-style)">Fixed</button>
+            <button class="movement-btn active" data-movement="hybrid" title="Limited movement — some drift, colonies can form">Hybrid</button>
+            <button class="movement-btn" data-movement="mobile" title="Full movement — organisms roam freely">Mobile</button>
+        </div>
+
+        </div><!-- /section-movement -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="evolution">
+            <span class="section-title">Evolution</span>
+            <span class="section-toggle" id="toggle-evolution">▾</span>
+        </div>
+        <div class="section-body" id="section-evolution">
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-mutrate">Base Mutation Rate</label>
+                <span class="value" id="val-mutrate">0.03</span>
+            </div>
+            <input type="range" id="sl-mutrate" min="0.001" max="0.15" value="0.03" step="0.001">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-lifespan">Max Lifespan</label>
+                <span class="value" id="val-lifespan">500</span>
+            </div>
+            <input type="range" id="sl-lifespan" min="50" max="2000" value="500" step="50">
+        </div>
+
+        </div><!-- /section-evolution -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="population">
+            <span class="section-title">Population</span>
+            <span class="section-toggle" id="toggle-population">▾</span>
+        </div>
+        <div class="section-body" id="section-population">
+
+        <div class="chart-label-row">
+            <span class="chart-label">Strategy balance</span>
+            <span class="chart-legend">
+                <span class="legend-dot" style="background:#44cc44"></span>Auto
+                <span class="legend-dot" style="background:#ff4444"></span>Pred
+                <span class="legend-dot" style="background:#aaaaaa"></span>Other
+            </span>
+        </div>
+        <canvas id="chart-strategy"></canvas>
+
+        <div class="chart-label-row" style="margin-top:0.45rem">
+            <span class="chart-label">Hue diversity</span>
+            <span class="chart-legend" style="color:#333">species spectrum →</span>
+        </div>
+        <canvas id="chart-hue"></canvas>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-label">Total</span>
+                <span class="stat-value" id="st-total">—</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Generation</span>
+                <span class="stat-value" id="st-gen">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Births</span>
+                <span class="stat-value" id="st-births">—</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Deaths</span>
+                <span class="stat-value" id="st-deaths">—</span>
+            </div>
+        </div>
+
+        </div><!-- /section-population -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="display">
+            <span class="section-title">Display</span>
+            <span class="section-toggle" id="toggle-display">▾</span>
+        </div>
+        <div class="section-body" id="section-display">
+
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="chk-glow" checked>
+            <label for="chk-glow">LED glow effect</label>
+        </div>
+
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="chk-unlit" checked>
+            <label for="chk-unlit">Show unlit panel dots</label>
+        </div>
+
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="chk-trails">
+            <label for="chk-trails">Energy trails (slow)</label>
+        </div>
+
+        </div><!-- /section-display -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="weather">
+            <span class="section-title">Weather</span>
+            <span class="section-toggle" id="toggle-weather">▾</span>
+        </div>
+        <div class="section-body" id="section-weather">
+
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="chk-weather" checked>
+            <label for="chk-weather">Enable weather cycles</label>
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-season-len">Season length (ticks)</label>
+                <span class="value" id="val-season-len">400</span>
+            </div>
+            <input type="range" id="sl-season-len" min="50" max="2000" value="400" step="50">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-weather-intensity">Intensity</label>
+                <span class="value" id="val-weather-intensity">0.5</span>
+            </div>
+            <input type="range" id="sl-weather-intensity" min="0.1" max="1.0" value="0.5" step="0.05">
+        </div>
+
+        </div><!-- /section-weather -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="pathogens">
+            <span class="section-title">Pathogens</span>
+            <span class="section-toggle" id="toggle-pathogens">▾</span>
+        </div>
+        <div class="section-body" id="section-pathogens">
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-pathogen-virulence">Virulence</label>
+                <span class="value" id="val-pathogen-virulence">0.4</span>
+            </div>
+            <input type="range" id="sl-pathogen-virulence" min="0.05" max="1.5" value="0.4" step="0.05">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-pathogen-spread">Spread rate</label>
+                <span class="value" id="val-pathogen-spread">0.05</span>
+            </div>
+            <input type="range" id="sl-pathogen-spread" min="0.01" max="0.5" value="0.05" step="0.01">
+        </div>
+
+        <div class="control-group">
+            <label style="font-size:0.68rem;color:#555;margin-bottom:0.2rem;display:block">Target</label>
+            <div class="movement-toggle" id="pathogen-target-toggle">
+                <button class="movement-btn active" data-ptarget="any"    title="Infects any organism">Any</button>
+                <button class="movement-btn"         data-ptarget="predator" title="Targets predators">Pred</button>
+                <button class="movement-btn"         data-ptarget="auto"  title="Targets autotrophs">Auto</button>
+                <button class="movement-btn"         data-ptarget="hue"   title="Targets a specific hue band">Hue</button>
+            </div>
+        </div>
+
+        <button class="pathogen-btn" id="btn-outbreak" title="Trigger a pathogen outbreak">🦠 Trigger Outbreak</button>
+
+        </div><!-- /section-pathogens -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="catastrophes">
+            <span class="section-title">Catastrophes</span>
+            <span class="section-toggle" id="toggle-catastrophes">▾</span>
+        </div>
+        <div class="section-body" id="section-catastrophes">
+
+        <div class="cata-grid">
+            <button class="cata-btn" id="btn-meteor" title="Strike a random location with a meteor">☄️ Meteor</button>
+            <button class="cata-btn" id="btn-fire"   title="Start a wildfire at a random location">🔥 Wildfire</button>
+        </div>
+
+        <div class="control-group" style="margin-top:0.4rem">
+            <div class="control-row">
+                <label for="sl-cata-radius">Meteor radius</label>
+                <span class="value" id="val-cata-radius">8</span>
+            </div>
+            <input type="range" id="sl-cata-radius" min="2" max="30" value="8" step="1">
+        </div>
+
+        <div class="control-group">
+            <div class="control-row">
+                <label for="sl-fire-spread">Fire spread prob.</label>
+                <span class="value" id="val-fire-spread">0.12</span>
+            </div>
+            <input type="range" id="sl-fire-spread" min="0.00" max="0.20" value="0.12" step="0.01">
+        </div>
+
+        </div><!-- /section-catastrophes -->
+
+        <hr class="separator">
+        <div class="section-header" data-section="log">
+            <span class="section-title">Event Log</span>
+            <span class="section-toggle" id="toggle-log">▾</span>
+        </div>
+        <div class="section-body" id="section-log">
+        <div class="event-log" id="event-log"><span style="color:#222">No events yet.</span></div>
+        </div><!-- /section-log -->
+
+        <hr class="separator">
+        <div class="credit">Inspired by Primordial Life (1996) · v0.15</div>
+
+      </div><!-- /controls-inner -->
+    </aside>
+
+    <!-- ── Canvas ──────────────────────────────────── -->
+    <main class="display-area" id="display-area">
+        <canvas id="life-canvas"></canvas>
+        <div class="weather-overlay" id="weather-overlay"></div>
+        <div class="zoom-hint" id="zoom-hint">100%</div>
+        <div class="gen-overlay" id="gen-overlay">GEN 0 · TICK 0</div>
+        <div class="tooltip" id="tooltip"></div>
+    </main>
+</div>
+
+<!-- Focus mode enter button (always visible, top-right) -->
+<button class="focus-enter-btn" id="focus-enter-btn" title="Focus mode (⛶)">⛶</button>
+
+<!-- Focus mode overlay controls (only visible in focus mode) -->
+<button class="focus-ctrl" id="focus-play-btn" title="Play / Pause">▶</button>
+<button class="focus-ctrl" id="focus-exit-btn"  title="Exit focus mode (Esc)">⊠</button>
+
+<!-- Floating genome inspector (focus mode only) -->
+<div class="float-inspector" id="float-inspector">
+    <div class="float-inspector-header" id="float-inspector-header">
+        <span class="float-inspector-title">Organism</span>
+        <button class="float-inspector-close" id="float-inspector-close" title="Close">✕</button>
+    </div>
+    <div class="float-inspector-body" id="float-inspector-body"></div>
+</div>
+
+<script>
+// ================================================================
+//  LEDLife v0.15
+//  Single-file artificial life simulator with LED dot-matrix aesthetic
+//  Organisms are mobile agents on a fixed grid.
+//  Color encodes phenotype derived from genome.
+//  Energy economy is approximately conserved.
+//
+//  Version History
+//  ───────────────
+//  v0.15 Pathogen: symptomatic organisms fully blocked from reproducing;
+//        incubating organisms 50% reproduction suppressed; light energy
+//        drain added during incubation (virulence×0.03) to prevent
+//        "breed before sick" escape — outbreaks now genuinely crash
+//        populations rather than just taxing them; added isSymptomatic()
+//        and isIncubating() helpers, renderer updated to use them.
+//        Wildfire: fire now only spreads to fully unscorched cells (was
+//        >50% recovered — caused eternal re-ignition loop); bare-ground
+//        spread removed entirely (fire requires living fuel to propagate)
+//        — fires now self-extinguish naturally as they exhaust fuel
+//  v0.13 Fix initial centering: removed flexbox align/justify-center from
+//        display-area; canvas now position:absolute top/left:0 so only
+//        JS transform controls placement — eliminates the double-offset
+//        that caused the simulation to appear off-center on load;
+//        also locked html/body to 100% height with overflow:hidden so
+//        window never scrolls (sidebar and simulation scroll independently)
+//        and deferred fitToWindow one rAF for accurate layout dimensions
+//  v0.11 Floating organism inspector now active in both normal and focus
+//        modes; removed sidebar genome panel; all settings sections are
+//        collapsible (click header to toggle); Randomize Parameters
+//        button moved directly below Seed; settings panel scrolls
+//        independently of window; default zoom auto-fits simulation
+//        field to available display area on load and resize
+//  v0.10 Renamed from v0.9b; trackpad zoom/pan (Mac/Chrome): pinch
+//        gesture zooms, two-finger scroll pans (ctrlKey detection);
+//        fire spread range narrowed to 0–0.20 step 0.01; pathogen
+//        mortality raised to virulence×0.035 (was ×0.012), virulence
+//        slider extended to 1.5
+//  v0.9  Wildfire rebalanced: shorter TTLs (15-30 ticks vs 40-100),
+//        reduced bare-ground spread (0.3× vs 0.7×), 8% grid cap,
+//        no edge wrapping, default spread 0.12; Pathogen rebalanced:
+//        default spread 0.05, removed redundant proximity pass,
+//        mortality tripled (virulence×0.012 vs ×0.004); Zoom/pan:
+//        scroll-wheel zoom toward cursor, left-drag-when-zoomed pan,
+//        pinch-zoom on touch, double-click to reset, zoom-aware click
+//  v0.8  Weather system, Pathogen system, Catastrophe system
+//  v0.7  Three hue-diversity fixes: (A) hue–niche coupling —
+//        green/red/blue hue peaks confer photo/pred/def bonuses
+//        proportional to gene investment; (B) reproductive isolation
+//        — removed 0.05 mating floor so strict hue_tolerance enforces
+//        real speciation, hue now inherited from one parent not blended;
+//        (C) rare-hue frequency-dependent bonus — sparse hue bins get
+//        an energy advantage, opposing drift-driven fixation
+//  v0.6  Population charts redesigned: strategy balance line chart
+//        (Autotroph/Predator/Other with glow lines + fills) and live
+//        hue diversity histogram (36 bins, colored by actual hue);
+//        shared classifyStrategy() utility; stratHistory replaces
+//        popHistory tracking per-tick strategy counts
+//  v0.5  Starting Ecology presets (Primordial Soup / Garden /
+//        Battleground / Commune) — soft genome bias at seed time,
+//        evolution can still diverge; Movement Mode toggle (Fixed /
+//        Hybrid / Mobile) — live mobilityScale applied each tick
+//  v0.4  Floating genome inspector in focus mode — appears on click,
+//        draggable by header, ✕ close button, auto-repositions to
+//        stay within viewport, live-updates each tick; closes on
+//        exit focus mode
+//  v0.3  Focus mode (⛶ enter, ⏸/▶ overlay toggle, ⊠/Esc exit);
+//        canvas fills viewport in focus mode; Space bar play/pause;
+//        genome inspector redesigned with color-coded HTML bar rows,
+//        strategy badge with organism color swatch, grouped sections
+//  v0.2  Removed separate pause button (start/pause now one toggle);
+//        reset button moved alongside start; 🎲 seed randomize button;
+//        🎰 randomize-all button for pop/solar/mutrate/lifespan;
+//        grid default 100×100, max 200×200
+//  v0.1  Initial release — grid world, 12-gene genome, canvas LED
+//        renderer, energy economy, sexual/asexual reproduction,
+//        population chart, genome inspector
+// ================================================================
+
+// ── Seeded RNG (Mulberry32, identical to LEDBonsai) ──────────────
+class RNG {
+    constructor(seed) { this.s = seed >>> 0; }
+    next() {
+        let t = (this.s += 0x6d2b79f5);
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    int(min, max) { return Math.floor(this.next() * (max - min + 1)) + min; }
+    float(min, max) { return this.next() * (max - min) + min; }
+    chance(p) { return this.next() < p; }
+    pick(arr) { return arr[Math.floor(this.next() * arr.length)]; }
+}
+
+// ── HSL → RGB ────────────────────────────────────────────────────
+function hslToRgb(h, s, l) {
+    h = ((h % 1) + 1) % 1;
+    s = Math.max(0, Math.min(1, s));
+    l = Math.max(0, Math.min(1, l));
+    const c = (1 - Math.abs(2*l - 1)) * s;
+    const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+    const m = l - c/2;
+    let r=0, g=0, b=0;
+    if      (h < 1/6) { r=c; g=x; b=0; }
+    else if (h < 2/6) { r=x; g=c; b=0; }
+    else if (h < 3/6) { r=0; g=c; b=x; }
+    else if (h < 4/6) { r=0; g=x; b=c; }
+    else if (h < 5/6) { r=x; g=0; b=c; }
+    else              { r=c; g=0; b=x; }
+    return [Math.round((r+m)*255), Math.round((g+m)*255), Math.round((b+m)*255)];
+}
+
+// ── Genome ───────────────────────────────────────────────────────
+// 12 genes, all floats in [0,1].
+// Displayed phenotype (color, behavior) is derived from genes.
+//
+//  0: hue              — species/lineage identity (0–1 = full color wheel)
+//  1: hue_tolerance    — how different a mate's hue can be (0=strict, 1=any)
+//  2: photosynthesis   — passive solar energy gain per tick
+//  3: predation        — energy steal from neighbors
+//  4: defense          — resistance to predation
+//  5: metabolism_rate  — energy burned per tick
+//  6: mobility         — prob of attempting to move each tick
+//  7: aggression       — prob of attacking an adjacent organism
+//  8: kin_tolerance    — attacks kin if low; 1=never attacks similar hue
+//  9: repro_threshold  — fraction of max_energy needed to reproduce
+// 10: mutation_rate    — per-gene mutation magnitude (evolvable!)
+// 11: lifespan_frac    — fraction of global max lifespan
+const GENE = { HUE:0, HUE_TOL:1, PHOTO:2, PRED:3, DEF:4,
+               META:5, MOB:6, AGG:7, KIN:8, REPRO:9, MUT:10, LIFE:11 };
+const N_GENES = 12;
+const MAX_ENERGY = 1.0;
+
+function randomGenome(rng) {
+    const g = new Float32Array(N_GENES);
+    for (let i = 0; i < N_GENES; i++) g[i] = rng.next();
+    return g;
+}
+
+// ── Ecology profiles ─────────────────────────────────────────────
+// Each profile is a target value per gene (null = fully random).
+// biasStrength [0-1]: how hard each gene is pulled toward target.
+// This is a soft bias — organisms still vary and can evolve away.
+const ECOLOGY_PROFILES = {
+    soup: null, // pure random — no bias
+
+    garden: {
+        // High photosynthesis, low predation, moderate defense,
+        // low aggression, moderate mobility, moderate kin tolerance
+        bias: 0.65,
+        targets: {
+            [GENE.PHOTO]: 0.72, [GENE.PRED]: 0.18, [GENE.DEF]: 0.45,
+            [GENE.AGG]:   0.20, [GENE.MOB]:  0.35, [GENE.KIN]: 0.55,
+            [GENE.META]:  0.35, [GENE.MUT]:  0.25,
+        }
+    },
+
+    battleground: {
+        // Mixed: half the population is predator-leaning, half autotroph
+        // Achieved by randomly assigning each organism to one archetype
+        bias: 0.70,
+        archetypes: [
+            // Predator archetype
+            { [GENE.PRED]: 0.75, [GENE.AGG]: 0.72, [GENE.MOB]: 0.65,
+              [GENE.PHOTO]: 0.15, [GENE.DEF]: 0.30, [GENE.KIN]: 0.25, [GENE.META]: 0.55 },
+            // Prey/plant archetype
+            { [GENE.PHOTO]: 0.78, [GENE.DEF]: 0.60, [GENE.AGG]: 0.15,
+              [GENE.PRED]: 0.12, [GENE.MOB]: 0.25, [GENE.KIN]: 0.65, [GENE.META]: 0.30 },
+        ]
+    },
+
+    commune: {
+        // High kin tolerance, high defense, moderate photosynthesis,
+        // very low aggression, low predation, low mobility (cluster tendency)
+        bias: 0.70,
+        targets: {
+            [GENE.KIN]:   0.82, [GENE.DEF]:  0.65, [GENE.AGG]:  0.15,
+            [GENE.PRED]:  0.12, [GENE.PHOTO]: 0.55, [GENE.MOB]:  0.28,
+            [GENE.HUE_TOL]: 0.30, [GENE.MUT]: 0.20,
+        }
+    },
+};
+
+function biasedGenome(rng, ecology) {
+    const g = randomGenome(rng);
+    const profile = ECOLOGY_PROFILES[ecology];
+    if (!profile) return g; // soup = pure random
+
+    let targets;
+    const bias = profile.bias;
+
+    if (profile.archetypes) {
+        // Battleground: randomly pick an archetype for this organism
+        targets = rng.chance(0.5) ? profile.archetypes[0] : profile.archetypes[1];
+    } else {
+        targets = profile.targets;
+    }
+
+    // Soft pull: lerp each biased gene toward its target, keeping randomness
+    for (const [geneIdx, target] of Object.entries(targets)) {
+        const i = parseInt(geneIdx);
+        // Add a small per-organism jitter so the population isn't cloned
+        const jitter = rng.float(-0.12, 0.12);
+        g[i] = g[i] * (1 - bias) + (target + jitter) * bias;
+        g[i] = Math.max(0, Math.min(1, g[i]));
+    }
+    return g;
+}
+
+function mutateGenome(parent, rng, baseMutRate) {
+    const child = new Float32Array(parent);
+    const rate = parent[GENE.MUT] * baseMutRate * 3 + baseMutRate * 0.5;
+    for (let i = 0; i < N_GENES; i++) {
+        if (rng.chance(rate * 3)) {
+            child[i] = Math.max(0, Math.min(1, child[i] + rng.float(-0.12, 0.12)));
+        }
+    }
+    return child;
+}
+
+function crossGenomes(a, b, rng) {
+    const child = new Float32Array(N_GENES);
+    for (let i = 0; i < N_GENES; i++) {
+        child[i] = rng.chance(0.5) ? a[i] : b[i];
+    }
+    return child;
+}
+
+function genomicDistance(a, b) {
+    // Hue distance on circular axis, weighted heavily
+    const dh = Math.min(Math.abs(a[GENE.HUE] - b[GENE.HUE]),
+                        1 - Math.abs(a[GENE.HUE] - b[GENE.HUE]));
+    return dh;
+}
+
+// ── Fix A: Hue–niche coupling ─────────────────────────────────────
+// Hue is no longer a neutral marker — it confers niche bonuses.
+// The color wheel has three ecological peaks:
+//   green  (~0.33) → photosynthesis efficiency bonus
+//   red    (~0.00/1.0) → predation/attack bonus
+//   blue   (~0.65) → defense/armor bonus
+// Bonus magnitude is scaled by the organism's investment in that gene,
+// so a high-photosynthesis organism benefits most from green hue.
+// This creates frequency-dependent selection on hue via niche pressure.
+function hueNicheBonus(h, g) {
+    // Circular distance to each niche peak (0–0.5 scale)
+    const distGreen = Math.min(Math.abs(h - 0.33), 1 - Math.abs(h - 0.33));
+    const distRed   = Math.min(Math.abs(h - 0.0),  1 - Math.abs(h - 0.0));
+    const distBlue  = Math.min(Math.abs(h - 0.65), 1 - Math.abs(h - 0.65));
+
+    // Bonus is strongest when hue is close to peak (within ~0.15 of wheel)
+    // and scaled by how much the organism invests in that strategy
+    const greenBonus = Math.max(0, 1 - distGreen / 0.18) * g[GENE.PHOTO] * 0.012;
+    const redBonus   = Math.max(0, 1 - distRed   / 0.18) * g[GENE.PRED]  * 0.010;
+    const blueBonus  = Math.max(0, 1 - distBlue  / 0.18) * g[GENE.DEF]   * 0.008;
+
+    return greenBonus + redBonus + blueBonus;
+}
+
+// ── Weather System ────────────────────────────────────────────────
+// Two channels: light (solar multiplier) and temperature (meta cost).
+// A slow sinusoidal base cycle is layered with random perturbations.
+// Cold-blooded interpretation: low-META organisms are more disrupted
+// by extreme temperatures (both hot and cold) because they can't
+// self-regulate. High-META organisms pay a stable cost either way.
+class WeatherSystem {
+    constructor(rng) {
+        this.rng = rng;
+        this.lightMult  = 1.0;  // solar multiplier applied to solarIntensity
+        this.tempOffset = 0.0;  // temperature offset: negative=cold, positive=hot
+        this.phase = 0;         // season cycle phase [0, 2π]
+        this.perturbLight = 0;  // short-term weather noise on light
+        this.perturbTemp  = 0;
+        this.perturbDecay = 0.02;
+        this.nextPerturbIn = 0; // ticks until next random weather event
+        this.label = '☀';
+    }
+
+    step(config) {
+        if (!config.weatherEnabled) {
+            this.lightMult = 1.0;
+            this.tempOffset = 0.0;
+            this.label = '☀';
+            return;
+        }
+
+        const intensity = config.weatherIntensity;
+        const seasonLen = config.seasonLen;
+
+        // Advance seasonal phase
+        this.phase += (2 * Math.PI) / seasonLen;
+
+        // Base seasonal cycles — light and temp slightly out of phase
+        // so the warmest period lags the brightest (like real seasons)
+        const baseLightCycle = Math.sin(this.phase);                    // -1 to 1
+        const baseTempCycle  = Math.sin(this.phase - Math.PI * 0.15);  // slight lag
+
+        this.lightMult  = 1.0 + baseLightCycle * 0.45 * intensity;
+        this.tempOffset =       baseTempCycle  * 0.5  * intensity;
+
+        // Random perturbations (storms, heat waves, cold snaps)
+        this.nextPerturbIn--;
+        if (this.nextPerturbIn <= 0) {
+            const type = this.rng.int(0, 3);
+            if (type === 0) {
+                // Storm: sharply reduce light
+                this.perturbLight = -0.4 * intensity;
+                this.perturbTemp  = -0.15 * intensity;
+            } else if (type === 1) {
+                // Heat wave: bright + hot
+                this.perturbLight =  0.2 * intensity;
+                this.perturbTemp  =  0.45 * intensity;
+            } else if (type === 2) {
+                // Cold snap: less light, cold
+                this.perturbLight = -0.25 * intensity;
+                this.perturbTemp  = -0.4  * intensity;
+            }
+            // Otherwise: clear spell, perturbations drift toward zero
+            this.nextPerturbIn = this.rng.int(30, Math.floor(seasonLen * 0.4));
+        }
+
+        // Decay perturbations toward zero
+        this.perturbLight *= (1 - this.perturbDecay);
+        this.perturbTemp  *= (1 - this.perturbDecay);
+
+        this.lightMult  = Math.max(0.05, this.lightMult  + this.perturbLight);
+        this.tempOffset = Math.max(-1,   Math.min(1, this.tempOffset + this.perturbTemp));
+
+        // Derive weather label
+        const l = this.lightMult, t = this.tempOffset;
+        if (l < 0.5)             this.label = '🌧';
+        else if (t > 0.45)       this.label = '🌡';
+        else if (t < -0.35)      this.label = '❄';
+        else if (l > 1.35)       this.label = '☀';
+        else                     this.label = '🌤';
+    }
+
+    // Energy modifier applied to each organism's metabolize step
+    // cold-bloodedness: organisms with low META are more sensitive to
+    // extreme temperatures; high-META organisms are thermally stable
+    metaCostModifier(metaGene) {
+        // Extreme temperature (hot or cold) costs extra for ectotherms (low meta)
+        const extremeness = Math.abs(this.tempOffset);
+        const coldBloodedness = 1 - metaGene; // high meta = warm-blooded = stable
+        return extremeness * coldBloodedness * 0.003;
+    }
+
+    // Solar multiplier to apply to solarGain
+    solarMultiplier() { return this.lightMult; }
+}
+
+// ── Pathogen System ───────────────────────────────────────────────
+// Parameterized outbreaks — not evolving agents.
+// Each outbreak has: a target profile, virulence, spread rate, duration.
+// Infected organisms: drain energy each tick, can transmit on contact/
+// proximity, recover after duration ticks (or die first).
+class PathogenSystem {
+    constructor() {
+        this.infected = new Map(); // orgId → ticksRemaining
+        this.active = false;
+        this.virulence = 0.4;
+        this.spreadRate = 0.15;
+        this.target = 'any';    // 'any' | 'predator' | 'auto' | 'hue'
+        this.targetHue = 0;     // hue center for 'hue' targeting
+        this.targetHueBand = 0.12; // ±band around targetHue
+        this.duration = 300;    // ticks infected before recovery
+        // Incubation: first INCUBATION_FRAC of duration the organism spreads
+        // silently with no symptoms — visible wave of infection before die-off.
+        this.INCUBATION_FRAC = 0.35;
+    }
+
+    isTarget(org) {
+        if (this.target === 'any') return true;
+        const s = classifyStrategy(org.genome);
+        if (this.target === 'predator') return s === 'Predator' || org.genome[GENE.AGG] > 0.5;
+        if (this.target === 'auto')     return s === 'Autotroph' || org.genome[GENE.PHOTO] > 0.5;
+        if (this.target === 'hue') {
+            const d = Math.min(Math.abs(org.baseHue - this.targetHue),
+                               1 - Math.abs(org.baseHue - this.targetHue));
+            return d < this.targetHueBand;
+        }
+        return true;
+    }
+
+    triggerOutbreak(world, config) {
+        this.virulence  = config.pathogenVirulence;
+        this.spreadRate = config.pathogenSpread;
+        this.target     = config.pathogenTarget;
+        this.duration   = 200 + Math.floor(300 / (this.virulence + 0.1));
+
+        // Seed 2-3% of eligible organisms as initial infected
+        const eligible = Array.from(world.organisms.values()).filter(o => this.isTarget(o));
+        if (eligible.length === 0) return 0;
+
+        // For hue targeting, pick a random dominant hue from the population
+        if (this.target === 'hue') {
+            const sample = world.rng.pick(eligible);
+            this.targetHue = sample.baseHue;
+        }
+
+        const seedCount = Math.max(1, Math.floor(eligible.length * 0.025));
+        const shuffled = eligible.sort(() => world.rng.next() - 0.5).slice(0, seedCount);
+        for (const org of shuffled) {
+            this.infected.set(org.id, this.duration);
+        }
+        this.active = true;
+        return shuffled.length;
+    }
+
+    step(world) {
+        if (!this.active || this.infected.size === 0) {
+            this.active = false;
+            this.infected.clear();
+            return;
+        }
+
+        const toRemove = [];
+        const toInfect = [];
+
+        for (const [id, ticksLeft] of this.infected) {
+            const org = world.organisms.get(id);
+            if (!org) { toRemove.push(id); continue; }
+
+            const incubating = ticksLeft > this.duration * (1 - this.INCUBATION_FRAC);
+
+            if (incubating) {
+                // Light drain during incubation — enough to suppress reproduction
+                // in organisms near threshold, but not outright lethal yet.
+                org.energy -= this.virulence * 0.03;
+            } else {
+                // Symptomatic: full drain competing with photosynthesis.
+                // virulence=0.4 → 0.048/tick (stressful); 1.5 → 0.18/tick (lethal).
+                org.energy -= this.virulence * 0.12;
+            }
+
+            // Transmission — same rate regardless of phase
+            const neighbors = world.occupiedNeighbors(org.x, org.y);
+            for (const n of neighbors) {
+                if (!this.infected.has(n.org.id) &&
+                    this.isTarget(n.org) &&
+                    world.rng.chance(this.spreadRate * 0.35)) {
+                    toInfect.push(n.org.id);
+                }
+            }
+
+            const remaining = ticksLeft - 1;
+            if (remaining <= 0) {
+                toRemove.push(id);
+            } else {
+                this.infected.set(id, remaining);
+            }
+        }
+
+        for (const id of toRemove) this.infected.delete(id);
+        for (const id of toInfect) {
+            if (!this.infected.has(id)) this.infected.set(id, this.duration);
+        }
+
+        if (this.infected.size === 0) this.active = false;
+    }
+
+    isIncubating(orgId) {
+        const t = this.infected.get(orgId);
+        return t !== undefined && t > this.duration * (1 - this.INCUBATION_FRAC);
+    }
+
+    isSymptomatic(orgId) {
+        const t = this.infected.get(orgId);
+        return t !== undefined && t <= this.duration * (1 - this.INCUBATION_FRAC);
+    }
+
+    isInfected(orgId) { return this.infected.has(orgId); }
+    get count() { return this.infected.size; }
+}
+
+// ── Catastrophe System ────────────────────────────────────────────
+// Two event types: Meteor (instant kill zone) and Wildfire (spreading).
+// Scorched cells: grid of recovery timers. Organisms cannot move into
+// a scorched cell; organisms caught by spreading fire are killed.
+const SCORCH_RECOVERY = 120; // ticks for a scorched cell to recover
+
+class CatastropheSystem {
+    constructor(cols, rows) {
+        // scorch[y][x] = ticks remaining until recovered (0 = clear)
+        this.scorch = Array.from({length: rows}, () => new Int16Array(cols));
+        this.cols = cols;
+        this.rows = rows;
+        this.fires = []; // active fire fronts: [{x, y, ttl}]
+    }
+
+    reset(cols, rows) {
+        this.cols = cols;
+        this.rows = rows;
+        this.scorch = Array.from({length: rows}, () => new Int16Array(cols));
+        this.fires = [];
+    }
+
+    isScorched(x, y) {
+        return this.scorch[y]?.[x] > 0;
+    }
+
+    meteor(world, cx, cy, radius) {
+        let killed = 0;
+        const r2 = radius * radius;
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                if (dx*dx + dy*dy > r2) continue;
+                const nx = (cx + dx + this.cols) % this.cols;
+                const ny = (cy + dy + this.rows) % this.rows;
+                const org = world.getCell(nx, ny);
+                if (org) { world.remove(org); killed++; }
+                this.scorch[ny][nx] = SCORCH_RECOVERY + Math.floor(Math.random() * 40);
+            }
+        }
+        return killed;
+    }
+
+    startFire(world, cx, cy) {
+        // Seed 2-3 initial fire cells around the ignition point (was 3-5)
+        const seeds = 2 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < seeds; i++) {
+            const ox = Math.max(0, Math.min(this.cols - 1, cx + Math.floor(Math.random() * 5) - 2));
+            const oy = Math.max(0, Math.min(this.rows - 1, cy + Math.floor(Math.random() * 5) - 2));
+            // TTL 15–30, matching spread cells
+            this.fires.push({ x: ox, y: oy, ttl: 15 + Math.floor(Math.random() * 15) });
+            const org = world.getCell(ox, oy);
+            if (org) world.remove(org);
+            this.scorch[oy][ox] = SCORCH_RECOVERY;
+        }
+        return seeds;
+    }
+
+    step(world, fireSpreadProb) {
+        // Decay scorch timers
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                if (this.scorch[y][x] > 0) this.scorch[y][x]--;
+            }
+        }
+
+        if (this.fires.length === 0) return 0;
+
+        // Hard cap: fire cannot exceed 8% of grid cells — prevents total overrun
+        const MAX_FIRE_CELLS = Math.floor(this.cols * this.rows * 0.08);
+
+        let newKilled = 0;
+        const newFires = [];
+
+        for (const fire of this.fires) {
+            fire.ttl--;
+            if (fire.ttl <= 0) continue;
+
+            if (newFires.length < MAX_FIRE_CELLS) {
+                const dirs = [{dx:-1,dy:0},{dx:1,dy:0},{dx:0,dy:-1},{dx:0,dy:1}];
+                for (const {dx, dy} of dirs) {
+                    // No wrapping — fire stops at grid edges naturally
+                    const nx = fire.x + dx;
+                    const ny = fire.y + dy;
+                    if (nx < 0 || nx >= this.cols || ny < 0 || ny >= this.rows) continue;
+                    // Only spread to fully recovered cells — prevents the
+                    // re-ignition feedback loop that kept fire burning forever.
+                    // A cell scorched 1 tick ago is as fireproof as one still burning.
+                    if (this.scorch[ny][nx] > 0) continue;
+                    // Fire requires fuel (a living organism) to spread.
+                    // Bare ground does not carry fire — this was the other half
+                    // of the eternal-fire bug (0.3× bare spread still > 0).
+                    const org = world.getCell(nx, ny);
+                    if (!org) continue;
+                    if (Math.random() < fireSpreadProb) {
+                        world.remove(org); newKilled++;
+                        this.scorch[ny][nx] = SCORCH_RECOVERY + Math.floor(Math.random() * 20);
+                        newFires.push({ x: nx, y: ny, ttl: 15 + Math.floor(Math.random() * 15) });
+                    }
+                }
+            }
+
+            newFires.push(fire);
+        }
+
+        this.fires = newFires.filter(f => f.ttl > 0);
+        return newKilled;
+    }
+
+    // Renderer hook: returns scorch intensity [0,1] for a cell, 0=clear
+    scorchIntensity(x, y) {
+        const v = this.scorch[y]?.[x] || 0;
+        return Math.min(1, v / SCORCH_RECOVERY);
+    }
+
+    get activeFireCount() { return this.fires.length; }
+}
+
+// ── Phenotype from Genome ─────────────────────────────────────────
+// Hue = identity gene
+// Saturation: shifted red if predator, blue if defender
+// Lightness: driven by energy (runtime)
+function genomeToBaseColor(g) {
+    // Hue is direct
+    let h = g[GENE.HUE];
+    // Saturation: predators are more saturated reds, defenders more blues
+    // We bias the hue toward red/blue based on net strategy
+    const predNet = g[GENE.PRED] - g[GENE.DEF];
+    if (predNet > 0.1) {
+        // shift hue toward red (0.0)
+        h = h * (1 - predNet * 0.5);
+    } else if (predNet < -0.1) {
+        // shift hue toward blue (0.65)
+        h = h + (-predNet) * 0.3 * (0.65 - h);
+    }
+    // Photosynthesizers drift toward green
+    if (g[GENE.PHOTO] > 0.5) {
+        h = h + (g[GENE.PHOTO] - 0.5) * 0.4 * (0.33 - h);
+    }
+    h = ((h % 1) + 1) % 1;
+    const sat = 0.6 + g[GENE.PRED] * 0.3 + g[GENE.PHOTO] * 0.2;
+    return h; // store base hue; full color computed at render time with energy
+}
+
+// ── Shared strategy classifier ────────────────────────────────────
+function classifyStrategy(g) {
+    const p = g[GENE.PRED], ph = g[GENE.PHOTO], d = g[GENE.DEF];
+    if (ph > 0.6 && p < 0.4) return 'Autotroph';
+    if (p > 0.6 && d < 0.4)  return 'Predator';
+    if (d > 0.6)              return 'Defender';
+    if (p > 0.5 && ph > 0.5) return 'Opportunist';
+    return 'Generalist';
+}
+
+// ── Organism ──────────────────────────────────────────────────────
+let oidCounter = 0;
+class Organism {
+    constructor(x, y, genome, energy, rng) {
+        this.id = ++oidCounter;
+        this.x = x;
+        this.y = y;
+        this.genome = genome;
+        this.energy = energy;
+        this.age = 0;
+        this.baseHue = genomeToBaseColor(genome);
+    }
+}
+
+// ── World ─────────────────────────────────────────────────────────
+class World {
+    constructor(cols, rows, seed, config) {
+        this.cols = cols;
+        this.rows = rows;
+        this.config = config;
+        this.rng = new RNG(seed);
+        // grid[y][x] = Organism | null
+        this.grid = Array.from({length: rows}, () => new Array(cols).fill(null));
+        this.organisms = new Map(); // id → organism
+        this.tick = 0;
+        this.generation = 0;
+        this.totalBirths = 0;
+        this.totalDeaths = 0;
+        this.tickBirths = 0;
+        this.tickDeaths = 0;
+        // stratHistory: array of {total, auto, pred, other}
+        this.stratHistory = [];
+        // Fix C: live hue density histogram for frequency-dependent selection
+        this.hueBins = new Float32Array(36); // 36 bins × 10° each
+        this.energyPool = 0; // global energy pool from deaths (nutrients)
+        // Environmental systems
+        this.weather     = new WeatherSystem(this.rng);
+        this.pathogen    = new PathogenSystem();
+        this.catastrophe = new CatastropheSystem(cols, rows);
+    }
+
+    getCell(x, y) {
+        if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) return null;
+        return this.grid[y][x];
+    }
+
+    setCell(x, y, org) {
+        if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) return;
+        this.grid[y][x] = org;
+    }
+
+    place(org) {
+        this.setCell(org.x, org.y, org);
+        this.organisms.set(org.id, org);
+    }
+
+    remove(org) {
+        this.setCell(org.x, org.y, null);
+        this.organisms.delete(org.id);
+    }
+
+    // Moore neighborhood (8 cells), returns list of {x,y,org|null}
+    neighbors(x, y) {
+        const result = [];
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                const nx = (x + dx + this.cols) % this.cols;
+                const ny = (y + dy + this.rows) % this.rows;
+                result.push({ x: nx, y: ny, org: this.grid[ny][nx] });
+            }
+        }
+        return result;
+    }
+
+    emptyNeighbors(x, y) {
+        return this.neighbors(x, y).filter(n => n.org === null);
+    }
+
+    occupiedNeighbors(x, y) {
+        return this.neighbors(x, y).filter(n => n.org !== null);
+    }
+
+    // Seed initial population
+    seed(popSize) {
+        let placed = 0;
+        const attempts = popSize * 10;
+        for (let i = 0; i < attempts && placed < popSize; i++) {
+            const x = this.rng.int(0, this.cols - 1);
+            const y = this.rng.int(0, this.rows - 1);
+            if (!this.grid[y][x]) {
+                const g = biasedGenome(this.rng, this.config.ecology);
+                const org = new Organism(x, y, g, this.rng.float(0.3, 0.8), this.rng);
+                this.place(org);
+                placed++;
+            }
+        }
+        this.totalBirths = placed;
+    }
+
+    // One simulation tick
+    step() {
+        this.tick++;
+        this.tickBirths = 0;
+        this.tickDeaths = 0;
+
+        // Solar energy distributed uniformly this tick
+        const solarPerCell = this.config.solarIntensity / (this.cols * this.rows);
+
+        // ── Environmental system ticks ─────────────────────────────
+        this.weather.step(this.config);
+        this.pathogen.step(this);
+        const fireKilled = this.catastrophe.step(this, this.config.fireSpread ?? 0.35);
+        if (fireKilled > 0) {
+            this.tickDeaths  += fireKilled;
+            this.totalDeaths += fireKilled;
+        }
+
+        // Fix C: rebuild hue density histogram for frequency-dependent selection
+        this.hueBins.fill(0);
+        const totalOrgs = this.organisms.size || 1;
+        for (const org of this.organisms.values()) {
+            const bin = Math.floor(org.baseHue * 36) % 36;
+            this.hueBins[bin]++;
+        }
+        // Normalize to [0,1] fraction
+        for (let i = 0; i < 36; i++) this.hueBins[i] /= totalOrgs;
+
+        // Process organisms in random order to avoid bias
+        const ids = Array.from(this.organisms.keys());
+        // Fisher-Yates shuffle using our RNG
+        for (let i = ids.length - 1; i > 0; i--) {
+            const j = this.rng.int(0, i);
+            [ids[i], ids[j]] = [ids[j], ids[i]];
+        }
+
+        const toKill = [];
+        const newborns = [];
+
+        for (const id of ids) {
+            const org = this.organisms.get(id);
+            if (!org) continue; // already dead this tick
+
+            const g = org.genome;
+
+            // ── 1. Metabolize ──────────────────────────────────
+            const photo = g[GENE.PHOTO] * g[GENE.PHOTO];
+            const nicheBonus = hueNicheBonus(org.baseHue, g); // Fix A
+            // Fix C: rare-hue frequency-dependent bonus
+            const hueBin = Math.floor(org.baseHue * 36) % 36;
+            const hueDensity = this.hueBins[hueBin];
+            const rareBonus = Math.max(0, 0.15 - hueDensity) * 0.018;
+            // Weather: solar multiplier + temperature meta cost modifier
+            const solarMult = this.weather.solarMultiplier();
+            const weatherMetaCost = this.weather.metaCostModifier(g[GENE.META]);
+            const solarGain = (photo * this.config.solarIntensity * 0.8
+                            + solarPerCell * 0.5
+                            + nicheBonus
+                            + rareBonus) * solarMult;
+            const metaCost = 0.002 + g[GENE.META] * 0.006
+                           + g[GENE.MOB] * 0.001
+                           + g[GENE.PRED] * 0.001
+                           + weatherMetaCost;
+            org.energy += solarGain - metaCost;
+            org.energy = Math.min(MAX_ENERGY, org.energy);
+
+            // ── 2. Aggression / Predation ─────────────────────
+            if (org.energy > 0.1 && this.rng.chance(g[GENE.AGG] * 0.7)) {
+                const occ = this.occupiedNeighbors(org.x, org.y);
+                if (occ.length > 0) {
+                    const target = this.rng.pick(occ).org;
+                    if (target) {
+                        // Don't attack kin if kin_tolerance is high
+                        const dist = genomicDistance(g, target.genome);
+                        const kinProtect = g[GENE.KIN] * (1 - dist * 2);
+                        if (kinProtect < 0.5) {
+                            // Predation vs defense contest
+                            const attack = g[GENE.PRED] * 0.8;
+                            const defend = target.genome[GENE.DEF] * 0.6;
+                            if (attack > defend + this.rng.float(-0.1, 0.1)) {
+                                const stolen = Math.min(target.energy, attack * 0.3);
+                                target.energy -= stolen;
+                                org.energy = Math.min(MAX_ENERGY, org.energy + stolen * 0.7);
+                                if (target.energy <= 0) {
+                                    toKill.push(target);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── 3. Movement ───────────────────────────────────
+            // mobilityScale: Fixed=0, Hybrid=0.4, Mobile=1.0
+            const mobilityScale = this.config.mobilityScale ?? 0.4;
+            if (mobilityScale > 0 && this.rng.chance(g[GENE.MOB] * 0.6 * mobilityScale)) {
+                // Can't move into scorched cells
+                const empty = this.emptyNeighbors(org.x, org.y)
+                    .filter(n => !this.catastrophe.isScorched(n.x, n.y));
+                if (empty.length > 0) {
+                    const dest = this.rng.pick(empty);
+                    this.setCell(org.x, org.y, null);
+                    org.x = dest.x;
+                    org.y = dest.y;
+                    this.setCell(org.x, org.y, org);
+                }
+            }
+
+            // ── 4. Reproduction ───────────────────────────────
+            const reproThresh = 0.45 + g[GENE.REPRO] * 0.4;
+            // Infected organisms are reproductively suppressed:
+            // incubating = 50% chance to skip, symptomatic = blocked entirely.
+            // This is the key mechanism that makes outbreaks crash populations
+            // rather than just adding a steady tax that births cancel out.
+            const symptomatic = this.pathogen.isSymptomatic(org.id);
+            const incubatingOrg = this.pathogen.isIncubating(org.id);
+            if (symptomatic) {
+                // No reproduction while symptomatic
+            } else if (incubatingOrg && !this.rng.chance(0.5)) {
+                // 50% suppression while incubating
+            } else if (org.energy > reproThresh) {
+                // Can't reproduce into scorched cells
+                const empty = this.emptyNeighbors(org.x, org.y)
+                    .filter(n => !this.catastrophe.isScorched(n.x, n.y));
+                if (empty.length > 0) {
+                    const dest = this.rng.pick(empty);
+                    let childGenome;
+
+                    // Sexual reproduction: look for compatible mate
+                    let mated = false;
+                    const occ = this.occupiedNeighbors(org.x, org.y);
+                    if (occ.length > 0) {
+                        const candidate = this.rng.pick(occ).org;
+                        if (candidate) {
+                            const dist = genomicDistance(g, candidate.genome);
+                            const tol = (g[GENE.HUE_TOL] + candidate.genome[GENE.HUE_TOL]) * 0.5;
+                            if (dist < tol * 0.5) {
+                                const crossed = crossGenomes(g, candidate.genome, this.rng);
+                                crossed[GENE.HUE] = this.rng.chance(0.5)
+                                    ? g[GENE.HUE]
+                                    : candidate.genome[GENE.HUE];
+                                childGenome = mutateGenome(crossed, this.rng, this.config.baseMutRate);
+                                mated = true;
+                                candidate.energy -= 0.08;
+                                // Pathogen: sexual transmission
+                                if (this.pathogen.isInfected(candidate.id) &&
+                                    this.pathogen.isTarget(org) &&
+                                    this.rng.chance(0.4)) {
+                                    this.pathogen.infected.set(org.id, this.pathogen.duration);
+                                }
+                                if (this.pathogen.isInfected(org.id) &&
+                                    this.pathogen.isTarget(candidate) &&
+                                    this.rng.chance(0.4)) {
+                                    this.pathogen.infected.set(candidate.id, this.pathogen.duration);
+                                }
+                            }
+                        }
+                    }
+
+                    if (!mated) {
+                        childGenome = mutateGenome(g, this.rng, this.config.baseMutRate);
+                    }
+
+                    const reproCost = 0.25 + g[GENE.REPRO] * 0.1;
+                    org.energy -= reproCost;
+
+                    const child = new Organism(dest.x, dest.y, childGenome, reproCost * 0.7, this.rng);
+                    newborns.push(child);
+                    this.tickBirths++;
+                    this.totalBirths++;
+                    if (childGenome[GENE.HUE] !== g[GENE.HUE]) this.generation++;
+                }
+            }
+
+            // ── 5. Age / starvation ────────────────────────────
+            org.age++;
+            const maxAge = 100 + g[GENE.LIFE] * this.config.maxLifespan;
+            if (org.energy <= 0 || org.age > maxAge) {
+                toKill.push(org);
+            }
+        }
+
+        // Apply deaths
+        for (const org of toKill) {
+            if (this.organisms.has(org.id)) {
+                this.energyPool += org.energy * 0.5;
+                this.remove(org);
+                this.tickDeaths++;
+                this.totalDeaths++;
+            }
+        }
+
+        // Place newborns
+        for (const org of newborns) {
+            if (!this.grid[org.y][org.x]) {
+                this.place(org);
+            }
+        }
+
+        // Record population history every 10 ticks
+        if (this.tick % 10 === 0) {
+            let auto = 0, pred = 0, other = 0;
+            for (const org of this.organisms.values()) {
+                const s = classifyStrategy(org.genome);
+                if (s === 'Autotroph') auto++;
+                else if (s === 'Predator') pred++;
+                else other++;
+            }
+            this.stratHistory.push({ total: this.organisms.size, auto, pred, other });
+            if (this.stratHistory.length > 200) this.stratHistory.shift();
+        }
+
+        // Auto-repopulate if extinct (add a few random organisms)
+        if (this.organisms.size === 0 && this.tick % 20 === 0) {
+            this.seed(Math.max(5, Math.floor(this.config.initialPop * 0.05)));
+        }
+    }
+}
+
+// ── Renderer ──────────────────────────────────────────────────────
+class Renderer {
+    constructor(canvas, world, config) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.world = world;
+        this.config = config;
+        this.cellSize = 10;
+        this.resize();
+    }
+
+    resize() {
+        const area = document.getElementById('display-area');
+        const w = area.clientWidth;
+        const h = area.clientHeight;
+        const cw = this.world.cols;
+        const ch = this.world.rows;
+        this.cellSize = Math.max(4, Math.min(
+            Math.floor(w / cw),
+            Math.floor(h / ch)
+        ));
+        this.canvas.width  = cw * this.cellSize;
+        this.canvas.height = ch * this.cellSize;
+    }
+
+    // Compute display color for an organism based on genome + current energy
+    organismColor(org, alpha=1) {
+        const g = org.genome;
+        const h = org.baseHue;
+        // Saturation: predators saturated, photosynthesizers also
+        const s = 0.55 + g[GENE.PRED] * 0.25 + g[GENE.PHOTO] * 0.15;
+        // Lightness: driven by energy, plus a base tied to defense/photo
+        const energyL = 0.25 + org.energy * 0.45;
+        const [r, gg, b] = hslToRgb(h, s, energyL);
+        if (alpha < 1) return `rgba(${r},${gg},${b},${alpha})`;
+        return [r, gg, b];
+    }
+
+    draw() {
+        const ctx = this.ctx;
+        const cs = this.cellSize;
+        const w = this.world;
+        const showGlow = this.config.showGlow;
+        const showUnlit = this.config.showUnlit;
+        const cata = w.catastrophe;
+        const pathogen = w.pathogen;
+
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Background panel
+        ctx.fillStyle = '#111114';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // ── Scorch overlay ────────────────────────────────────────
+        for (let y = 0; y < w.rows; y++) {
+            for (let x = 0; x < w.cols; x++) {
+                const si = cata.scorchIntensity(x, y);
+                if (si <= 0) continue;
+                const cx = x * cs + cs / 2;
+                const cy = y * cs + cs / 2;
+                // Fresh scorch = bright orange ember; fading = dark charcoal
+                const r = Math.round(si > 0.7 ? 200 * si : 60 * si);
+                const g = Math.round(si > 0.7 ? 80 * si : 20 * si);
+                const b = 0;
+                ctx.fillStyle = `rgba(${r},${g},${b},${0.4 + si * 0.5})`;
+                ctx.fillRect(x * cs, y * cs, cs, cs);
+            }
+        }
+
+        // Unlit dots
+        if (showUnlit) {
+            ctx.fillStyle = 'rgba(30,30,40,0.6)';
+            const r = cs * 0.28;
+            for (let y = 0; y < w.rows; y++) {
+                for (let x = 0; x < w.cols; x++) {
+                    if (!w.grid[y][x] && !cata.isScorched(x, y)) {
+                        const cx = x * cs + cs / 2;
+                        const cy = y * cs + cs / 2;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+
+        // Glow pass
+        if (showGlow && cs >= 6) {
+            for (const org of w.organisms.values()) {
+                const [r, g, b] = this.organismColor(org);
+                const cx = org.x * cs + cs / 2;
+                const cy = org.y * cs + cs / 2;
+                const glowR = cs * 0.9;
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+                const energy = Math.max(0.1, org.energy);
+                grad.addColorStop(0,   `rgba(${r},${g},${b},${0.55 * energy})`);
+                grad.addColorStop(0.5, `rgba(${r},${g},${b},${0.15 * energy})`);
+                grad.addColorStop(1,   `rgba(${r},${g},${b},0)`);
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // LED dots
+        const dotR = cs * 0.36;
+        const now = Date.now();
+        for (const org of w.organisms.values()) {
+            const incubating  = pathogen.isIncubating(org.id);
+            const symptomatic = pathogen.isSymptomatic(org.id);
+            const infected    = incubating || symptomatic;
+            let [r, g, b] = this.organismColor(org);
+
+            if (incubating) {
+                // Incubating: subtle yellow-green tinge — looks almost healthy,
+                // but a trained eye can spot the silent spread wave
+                const grey = Math.round(r * 0.3 + g * 0.3 + b * 0.4);
+                r = Math.round(r * 0.6 + grey * 0.2 + 30);
+                g = Math.round(g * 0.6 + grey * 0.2 + 20);
+                b = Math.round(b * 0.4 + grey * 0.1);
+            } else if (infected) {
+                // Symptomatic: desaturate toward sickly grey-purple
+                const grey = Math.round(r * 0.3 + g * 0.3 + b * 0.4);
+                r = Math.round(r * 0.45 + grey * 0.35 + 40);
+                g = Math.round(g * 0.3  + grey * 0.2);
+                b = Math.round(b * 0.45 + grey * 0.35 + 30);
+            }
+
+            const cx = org.x * cs + cs / 2;
+            const cy = org.y * cs + cs / 2;
+            const energy = Math.max(0.1, org.energy);
+
+            // Bright center
+            ctx.fillStyle = `rgb(${Math.min(255, r + 60)},${Math.min(255, g + 60)},${Math.min(255, b + 60)})`;
+            ctx.beginPath();
+            ctx.arc(cx, cy, dotR * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Main dot
+            // Incubating: slow dim pulse (hard to notice — that's the point)
+            // Symptomatic: faster sickly pulse
+            let pulse;
+            if (incubating)     pulse = 0.55 + 0.15 * Math.sin(now / 600);
+            else if (infected)  pulse = 0.55 + 0.35 * Math.sin(now / 180);
+            else                pulse = 0.7 + energy * 0.3;
+            ctx.fillStyle = `rgba(${r},${g},${b},${pulse})`;
+            ctx.beginPath();
+            ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+}
+
+// ── Strategy chart (3-line: Autotroph / Predator / Other) ─────────
+function drawStrategyChart(canvas, history) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0a0a0d';
+    ctx.fillRect(0, 0, w, h);
+
+    if (history.length < 2) return;
+
+    const maxTotal = Math.max(...history.map(s => s.total), 1);
+
+    const drawLine = (key, color, glowColor) => {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 3;
+        ctx.beginPath();
+        for (let i = 0; i < history.length; i++) {
+            const x = (i / (history.length - 1)) * w;
+            const y = h - (history[i][key] / maxTotal) * (h - 2) - 1;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+    };
+
+    // Draw fills first (subtle), then lines on top
+    const drawFill = (key, color) => {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (let i = 0; i < history.length; i++) {
+            const x = (i / (history.length - 1)) * w;
+            const y = h - (history[i][key] / maxTotal) * (h - 2) - 1;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    };
+
+    drawFill('other', 'rgba(170,170,170,0.04)');
+    drawFill('pred',  'rgba(255,68,68,0.05)');
+    drawFill('auto',  'rgba(68,204,68,0.06)');
+
+    drawLine('other', 'rgba(150,150,150,0.55)', 'rgba(150,150,150,0.2)');
+    drawLine('pred',  'rgba(255,80,80,0.75)',    'rgba(255,60,60,0.3)');
+    drawLine('auto',  'rgba(68,204,68,0.85)',    'rgba(57,255,20,0.35)');
+}
+
+// ── Hue histogram (species diversity) ────────────────────────────
+const HUE_BINS = 36; // 10° per bin
+
+function drawHueChart(canvas, world) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0a0a0d';
+    ctx.fillRect(0, 0, w, h);
+
+    if (!world || world.organisms.size === 0) return;
+
+    // Count organisms per hue bin
+    const bins = new Float32Array(HUE_BINS);
+    for (const org of world.organisms.values()) {
+        const bin = Math.floor(org.baseHue * HUE_BINS) % HUE_BINS;
+        bins[bin]++;
+    }
+    const maxBin = Math.max(...bins, 1);
+    const barW = w / HUE_BINS;
+
+    for (let i = 0; i < HUE_BINS; i++) {
+        if (bins[i] === 0) continue;
+        const barH = (bins[i] / maxBin) * (h - 2);
+        const hue = i / HUE_BINS;
+        const [r, g, b] = hslToRgb(hue, 0.85, 0.55);
+        const x = i * barW;
+        const y = h - barH;
+
+        // Glow
+        ctx.save();
+        ctx.shadowColor = `rgba(${r},${g},${b},0.5)`;
+        ctx.shadowBlur = 4;
+        ctx.fillStyle = `rgba(${r},${g},${b},0.75)`;
+        ctx.fillRect(x + 0.5, y, barW - 0.5, barH);
+        ctx.restore();
+    }
+}
+
+// ── Genome inspector ──────────────────────────────────────────────
+function describeGenome(org) {
+    const g = org.genome;
+
+    const strategy = classifyStrategy(g);
+
+    // Derive the same display color as the renderer uses
+    const [r, gg, b] = hslToRgb(org.baseHue,
+        0.55 + g[GENE.PRED]*0.25 + g[GENE.PHOTO]*0.15,
+        0.25 + org.energy * 0.45);
+    const swatchColor = `rgb(${r},${gg},${b})`;
+
+    // Build a bar row: label, value 0-1, bar color hex
+    const row = (label, val, color = '#39ff14') => {
+        const pct = Math.round(val * 100);
+        return `<div class="genome-row">
+            <span class="genome-row-label">${label}</span>
+            <div class="genome-bar-wrap">
+                <div class="genome-bar-fill" style="width:${pct}%;background:${color}"></div>
+            </div>
+            <span class="genome-pct">${pct}%</span>
+        </div>`;
+    };
+
+    const energyColor = org.energy > 0.6 ? '#39ff14' : org.energy > 0.3 ? '#ffa020' : '#ff3030';
+
+    return `
+    <div class="genome-header">
+        <div class="genome-swatch" style="background:${swatchColor};color:${swatchColor}"></div>
+        <span class="genome-strategy">${strategy}</span>
+        <div class="genome-meta">age ${org.age}<br>id ${org.id}</div>
+    </div>
+
+    <div class="genome-section-label">Vitals</div>
+    ${row('Energy',   org.energy,      energyColor)}
+    ${row('Lifespan', g[GENE.LIFE],    '#888')}
+
+    <div class="genome-section-label">Energy Budget</div>
+    ${row('Photosyn.', g[GENE.PHOTO],  '#44cc44')}
+    ${row('Predation', g[GENE.PRED],   '#ff4444')}
+    ${row('Defense',   g[GENE.DEF],    '#4488ff')}
+    ${row('Metabolism',g[GENE.META],   '#888')}
+
+    <div class="genome-section-label">Behavior</div>
+    ${row('Mobility',   g[GENE.MOB],   '#cc88ff')}
+    ${row('Aggression', g[GENE.AGG],   '#ff8844')}
+    ${row('Kin Tol.',   g[GENE.KIN],   '#44ffcc')}
+
+    <div class="genome-section-label">Reproduction</div>
+    ${row('Repro Thresh.', g[GENE.REPRO],  '#ffdd44')}
+    ${row('Hue Tol.',      g[GENE.HUE_TOL],'#aaddff')}
+    ${row('Mut. Rate',     g[GENE.MUT],    '#ff88cc')}
+    `;
+}
+
+// ── Event log ─────────────────────────────────────────────────────
+const MAX_LOG_ENTRIES = 40;
+function logEvent(type, msg) {
+    const log = document.getElementById('event-log');
+    if (!log) return;
+    // Clear placeholder
+    if (log.querySelector('span[style]')) log.innerHTML = '';
+    const el = document.createElement('div');
+    el.className = `ev-${type}`;
+    const tick = world ? world.tick : 0;
+    el.innerHTML = `<span class="ev-tick">[${tick}]</span> ${msg}`;
+    log.insertBefore(el, log.firstChild);
+    // Trim old entries
+    while (log.children.length > MAX_LOG_ENTRIES) log.removeChild(log.lastChild);
+}
+
+// ── Main application ──────────────────────────────────────────────
+const canvas        = document.getElementById('life-canvas');
+const displayArea   = document.getElementById('display-area');
+const zoomHint      = document.getElementById('zoom-hint');
+const chartStrategy = document.getElementById('chart-strategy');
+const chartHue      = document.getElementById('chart-hue');
+
+// ── Zoom / Pan ────────────────────────────────────────────────────
+// CSS transform approach: canvas renders the full grid at natural cell
+// size; zoom/pan are CSS transforms, simulation logic is unaffected.
+const view = { zoom: 1, panX: 0, panY: 0, minZoom: 0.25, maxZoom: 8 };
+let _zoomHintTimer = null;
+let _panDrag = null;
+let _pinchState = null;
+
+function applyViewTransform() {
+    canvas.style.transformOrigin = '0 0';
+    canvas.style.transform = `translate(${view.panX}px,${view.panY}px) scale(${view.zoom})`;
+}
+
+function showZoomHint() {
+    zoomHint.textContent = `${Math.round(view.zoom * 100)}%  (dbl-click to reset)`;
+    zoomHint.classList.add('visible');
+    clearTimeout(_zoomHintTimer);
+    _zoomHintTimer = setTimeout(() => zoomHint.classList.remove('visible'), 1800);
+}
+
+function resetView() {
+    view.zoom = 1; view.panX = 0; view.panY = 0;
+    applyViewTransform(); showZoomHint();
+}
+
+// Wheel handler — Mac trackpad aware:
+//   ctrlKey=true  → pinch gesture  → zoom toward cursor
+//   ctrlKey=false → two-finger pan → translate the view
+displayArea.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = displayArea.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    if (e.ctrlKey) {
+        // Pinch gesture (or Ctrl+scroll on any platform) → zoom
+        // deltaY is in pixels (deltaMode 0) for trackpad pinch; negate for natural direction
+        const factor = Math.pow(0.995, e.deltaY); // smooth continuous zoom
+        const newZoom = Math.max(view.minZoom, Math.min(view.maxZoom, view.zoom * factor));
+        if (newZoom === view.zoom) return;
+        view.panX = mx - ((mx - view.panX) / view.zoom) * newZoom;
+        view.panY = my - ((my - view.panY) / view.zoom) * newZoom;
+        view.zoom = newZoom;
+        applyViewTransform(); showZoomHint();
+    } else {
+        // Two-finger scroll (or regular scroll wheel) → pan
+        view.panX -= e.deltaX;
+        view.panY -= e.deltaY;
+        applyViewTransform();
+        // Show hint only if zoomed so user knows they can reset
+        if (view.zoom !== 1) showZoomHint();
+    }
+}, { passive: false });
+
+// Double-click resets view (only when actually zoomed/panned)
+displayArea.addEventListener('dblclick', (e) => {
+    if (Math.abs(view.zoom - 1) > 0.05 || Math.abs(view.panX) > 2 || Math.abs(view.panY) > 2) {
+        e.stopImmediatePropagation();
+        resetView();
+    }
+});
+
+// Left-drag to pan when zoomed in; middle-mouse always
+displayArea.addEventListener('mousedown', (e) => {
+    const isMiddle = e.button === 1;
+    const isAltLeft = e.button === 0 && e.altKey;
+    const isZoomedLeft = e.button === 0 && view.zoom > 1.05;
+    if (!isMiddle && !isAltLeft && !isZoomedLeft) return;
+    e.preventDefault();
+    _panDrag = { startX: e.clientX - view.panX, startY: e.clientY - view.panY };
+    displayArea.classList.add('panning');
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (!_panDrag) return;
+    view.panX = e.clientX - _panDrag.startX;
+    view.panY = e.clientY - _panDrag.startY;
+    applyViewTransform();
+});
+
+window.addEventListener('mouseup', () => {
+    if (_panDrag) { _panDrag = null; displayArea.classList.remove('panning'); }
+});
+
+// Touch: single-finger pan when zoomed, two-finger pinch-zoom
+displayArea.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        e.preventDefault();
+        const rect = displayArea.getBoundingClientRect();
+        _pinchState = {
+            dist:       Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                                   e.touches[0].clientY - e.touches[1].clientY),
+            midX:       (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
+            midY:       (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
+            startZoom:  view.zoom,
+            startPanX:  view.panX,
+            startPanY:  view.panY,
+        };
+    } else if (e.touches.length === 1 && view.zoom > 1.05) {
+        _panDrag = { startX: e.touches[0].clientX - view.panX,
+                     startY: e.touches[0].clientY - view.panY };
+    }
+}, { passive: false });
+
+displayArea.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && _pinchState) {
+        e.preventDefault();
+        const rect = displayArea.getBoundingClientRect();
+        const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                                   e.touches[0].clientY - e.touches[1].clientY);
+        const newMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+        const newMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+        const newZoom = Math.max(view.minZoom, Math.min(view.maxZoom,
+                                 _pinchState.startZoom * (newDist / _pinchState.dist)));
+        view.zoom = newZoom;
+        view.panX = newMidX - ((_pinchState.midX - _pinchState.startPanX) / _pinchState.startZoom) * newZoom;
+        view.panY = newMidY - ((_pinchState.midY - _pinchState.startPanY) / _pinchState.startZoom) * newZoom;
+        applyViewTransform(); showZoomHint();
+    } else if (e.touches.length === 1 && _panDrag) {
+        view.panX = e.touches[0].clientX - _panDrag.startX;
+        view.panY = e.touches[0].clientY - _panDrag.startY;
+        applyViewTransform();
+    }
+}, { passive: false });
+
+displayArea.addEventListener('touchend', () => { _pinchState = null; _panDrag = null; });
+
+// ── Canvas click → organism selection (zoom-aware coord mapping) ───
+
+// Size both charts to match sidebar width
+function resizeCharts() {
+    const w = Math.max(80, (chartStrategy.parentElement?.clientWidth || 242) - 18);
+    chartStrategy.width  = w;  chartStrategy.height = 52;
+    chartHue.width       = w;  chartHue.height      = 52;
+}
+resizeCharts();
+
+let world    = null;
+let renderer = null;
+let running  = false;
+let lastTick = 0;
+let rafId    = null;
+let selectedId = null;
+
+function getConfig() {
+    const movementMode = document.querySelector('.movement-btn.active')?.dataset.movement || 'hybrid';
+    const mobilityScale = movementMode === 'fixed' ? 0 : movementMode === 'hybrid' ? 0.4 : 1.0;
+    return {
+        cols:          parseInt(document.getElementById('sl-cols').value),
+        rows:          parseInt(document.getElementById('sl-rows').value),
+        initialPop:    parseInt(document.getElementById('sl-pop').value),
+        solarIntensity: parseFloat(document.getElementById('sl-solar').value),
+        baseMutRate:   parseFloat(document.getElementById('sl-mutrate').value),
+        maxLifespan:   parseInt(document.getElementById('sl-lifespan').value),
+        speed:         parseInt(document.getElementById('sl-speed').value),
+        showGlow:      document.getElementById('chk-glow').checked,
+        showUnlit:     document.getElementById('chk-unlit').checked,
+        ecology:       document.querySelector('.ecology-btn.active')?.dataset.ecology || 'soup',
+        movementMode,
+        mobilityScale,
+        // Weather
+        weatherEnabled:   document.getElementById('chk-weather').checked,
+        seasonLen:        parseInt(document.getElementById('sl-season-len').value),
+        weatherIntensity: parseFloat(document.getElementById('sl-weather-intensity').value),
+        // Pathogen
+        pathogenVirulence: parseFloat(document.getElementById('sl-pathogen-virulence').value),
+        pathogenSpread:    parseFloat(document.getElementById('sl-pathogen-spread').value),
+        pathogenTarget:    document.querySelector('#pathogen-target-toggle .movement-btn.active')?.dataset.ptarget || 'any',
+        // Catastrophe
+        meteorRadius: parseInt(document.getElementById('sl-cata-radius').value),
+        fireSpread:   parseFloat(document.getElementById('sl-fire-spread').value),
+    };
+}
+
+function getSeed() {
+    const v = document.getElementById('inp-seed').value.trim();
+    return v ? parseInt(v) : Math.floor(Math.random() * 9999999);
+}
+
+function fitToWindow() {
+    if (!world || !renderer || !canvas.width) return;
+    // Defer one frame so the layout has fully settled
+    requestAnimationFrame(() => {
+        const da = displayArea.getBoundingClientRect();
+        if (da.width <= 0 || da.height <= 0) return;
+        const scaleX = da.width  / canvas.width;
+        const scaleY = da.height / canvas.height;
+        const fitZoom = Math.min(scaleX, scaleY); // fit entirely, no overflow
+        view.zoom = Math.max(view.minZoom, Math.min(view.maxZoom, fitZoom));
+        // Center in display area
+        view.panX = (da.width  - canvas.width  * view.zoom) / 2;
+        view.panY = (da.height - canvas.height * view.zoom) / 2;
+        applyViewTransform();
+    });
+}
+
+function init() {
+    selectedId = null;
+    closeFloatInspector();
+
+    const cfg = getConfig();
+    const seed = getSeed();
+    document.getElementById('inp-seed').value = seed;
+
+    world = new World(cfg.cols, cfg.rows, seed, cfg);
+    world.seed(cfg.initialPop);
+
+    renderer = new Renderer(canvas, world, cfg);
+    renderer.draw();
+    updateStats();
+    fitToWindow();
+}
+
+function updateStats() {
+    if (!world) return;
+    document.getElementById('st-total').textContent  = world.organisms.size;
+    document.getElementById('st-gen').textContent    = world.generation;
+    document.getElementById('st-births').textContent = world.totalBirths;
+    document.getElementById('st-deaths').textContent = world.totalDeaths;
+    document.getElementById('gen-overlay').textContent = `GEN ${world.generation} · TICK ${world.tick}`;
+    drawStrategyChart(chartStrategy, world.stratHistory);
+    drawHueChart(chartHue, world);
+
+    // Weather overlay
+    const wx = world.weather;
+    const wEl = document.getElementById('weather-overlay');
+    if (wEl && world.config?.weatherEnabled !== false) {
+        const lightPct = Math.round(wx.lightMult * 100);
+        const tempVal  = wx.tempOffset; // -1 to 1
+        const tempPct  = Math.round((tempVal + 1) * 50); // 0-100
+        const tempColor = tempVal > 0.2 ? '#cc4422' : tempVal < -0.2 ? '#4488cc' : '#668866';
+        const lightColor = wx.lightMult > 1.1 ? '#ddcc44' : wx.lightMult < 0.6 ? '#445566' : '#667755';
+        wEl.innerHTML =
+            `<span class="w-icon">${wx.label}</span> ` +
+            `<span class="w-bar-wrap"><span class="w-bar" style="width:${Math.min(100,lightPct)}%;background:${lightColor}"></span></span> ` +
+            `☀ ${lightPct}%` +
+            `<br>` +
+            `<span class="w-bar-wrap"><span class="w-bar" style="width:${tempPct}%;background:${tempColor}"></span></span> ` +
+            `${tempVal > 0 ? '🌡+' : '❄'}${(tempVal * 100).toFixed(0)}%`;
+    } else if (wEl) {
+        wEl.innerHTML = '';
+    }
+
+    // Pathogen button glow when active
+    const pBtn = document.getElementById('btn-outbreak');
+    if (pBtn) pBtn.classList.toggle('active-event', world.pathogen.active);
+
+    // Fire button glow when fire is active
+    const fBtn = document.getElementById('btn-fire');
+    if (fBtn) fBtn.classList.toggle('active-event', world.catastrophe.activeFireCount > 0);
+
+    // Update selected organism display
+    if (selectedId) {
+        const org = world.organisms.get(selectedId);
+        if (org) {
+            const html = describeGenome(org);
+            const floatBody = document.getElementById('float-inspector-body');
+            if (floatBody && document.getElementById('float-inspector').classList.contains('visible')) {
+                floatBody.innerHTML = html;
+            }
+        } else {
+            selectedId = null;
+            closeFloatInspector();
+        }
+    }
+}
+
+let _lastWeatherLabel = '';
+
+function loop(timestamp) {
+    if (!running) return;
+    rafId = requestAnimationFrame(loop);
+
+    const cfg = getConfig();
+    const msPerTick = 1000 / cfg.speed;
+
+    if (timestamp - lastTick >= msPerTick) {
+        lastTick = timestamp;
+        world.config = cfg;
+        world.step();
+        renderer.config = cfg;
+        renderer.draw();
+        updateStats();
+
+        // Log notable weather transitions
+        if (cfg.weatherEnabled) {
+            const label = world.weather.label;
+            if (label !== _lastWeatherLabel) {
+                const descriptions = {
+                    '☀':  '☀ Clear skies — solar energy at peak',
+                    '🌤': '🌤 Partly cloudy — mild conditions',
+                    '🌧': '🌧 Storm — light levels sharply reduced',
+                    '🌡': '🌡 Heat wave — high metabolic stress for ectotherms',
+                    '❄':  '❄ Cold snap — cold-blooded organisms struggling',
+                };
+                if (_lastWeatherLabel !== '') {
+                    logEvent('weather', descriptions[label] || label);
+                }
+                _lastWeatherLabel = label;
+            }
+        }
+    }
+}
+
+function start() {
+    if (!world) init();
+    if (running) return;
+    running = true;
+    lastTick = performance.now();
+    rafId = requestAnimationFrame(loop);
+    document.getElementById('btn-start').textContent = '⏸ Pause';
+    document.getElementById('btn-start').classList.add('active-btn');
+    document.getElementById('focus-play-btn').textContent = '⏸';
+    document.getElementById('focus-play-btn').classList.add('active');
+}
+
+function pause() {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    document.getElementById('btn-start').textContent = '▶ Start';
+    document.getElementById('btn-start').classList.remove('active-btn');
+    document.getElementById('focus-play-btn').textContent = '▶';
+    document.getElementById('focus-play-btn').classList.remove('active');
+}
+
+function reset() {
+    pause();
+    init();
+}
+
+// ── Focus mode ────────────────────────────────────────────────────
+let inFocusMode = false;
+
+function enterFocus() {
+    inFocusMode = true;
+    document.body.classList.add('focus-mode');
+    resizeCanvasToViewport();
+}
+
+function exitFocus() {
+    inFocusMode = false;
+    document.body.classList.remove('focus-mode');
+    closeFloatInspector();
+    if (renderer) {
+        renderer.resize();
+        renderer.draw();
+    }
+}
+
+function resizeCanvasToViewport() {
+    if (!world || !renderer) return;
+    const cw = world.cols;
+    const ch = world.rows;
+    const cs = Math.max(4, Math.min(
+        Math.floor(window.innerWidth  / cw),
+        Math.floor(window.innerHeight / ch)
+    ));
+    renderer.cellSize = cs;
+    canvas.width  = cw * cs;
+    canvas.height = ch * cs;
+    renderer.draw();
+}
+
+// ── Controls ──────────────────────────────────────────────────────
+document.getElementById('btn-start').addEventListener('click', () => {
+    if (running) { pause(); } else { start(); }
+});
+
+document.getElementById('btn-reset').addEventListener('click', reset);
+
+// Focus mode buttons
+document.getElementById('focus-enter-btn').addEventListener('click', enterFocus);
+document.getElementById('focus-exit-btn').addEventListener('click', exitFocus);
+document.getElementById('focus-play-btn').addEventListener('click', () => {
+    if (running) { pause(); } else { start(); }
+});
+
+// Escape key exits focus mode
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && inFocusMode) exitFocus();
+    if (e.key === ' ' && inFocusMode) {
+        e.preventDefault();
+        if (running) { pause(); } else { start(); }
+    }
+});
+
+// Seed randomize button
+document.getElementById('btn-rand-seed').addEventListener('click', () => {
+    document.getElementById('inp-seed').value = Math.floor(Math.random() * 9999999);
+});
+
+// ── Pathogen target toggle ────────────────────────────────────────
+document.querySelectorAll('#pathogen-target-toggle .movement-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#pathogen-target-toggle .movement-btn')
+            .forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    });
+});
+
+// ── Outbreak trigger ──────────────────────────────────────────────
+document.getElementById('btn-outbreak').addEventListener('click', () => {
+    if (!world) return;
+    const cfg = getConfig();
+    const count = world.pathogen.triggerOutbreak(world, cfg);
+    if (count > 0) {
+        const targetLabel = { any:'any organism', predator:'predators',
+                              auto:'autotrophs', hue:'a hue band' };
+        logEvent('pathogen', `🦠 Outbreak! ${count} initial hosts — targeting ${targetLabel[cfg.pathogenTarget] || cfg.pathogenTarget}`);
+    } else {
+        logEvent('pathogen', '🦠 Outbreak failed — no eligible hosts found');
+    }
+});
+
+// ── Catastrophe buttons ───────────────────────────────────────────
+document.getElementById('btn-meteor').addEventListener('click', () => {
+    if (!world) return;
+    const cfg = getConfig();
+    const cx = Math.floor(Math.random() * world.cols);
+    const cy = Math.floor(Math.random() * world.rows);
+    const killed = world.catastrophe.meteor(world, cx, cy, cfg.meteorRadius);
+    logEvent('meteor', `☄️ Meteor impact at (${cx},${cy}) r=${cfg.meteorRadius} — ${killed} organisms killed`);
+    if (renderer) renderer.draw();
+});
+
+document.getElementById('btn-fire').addEventListener('click', () => {
+    if (!world) return;
+    const cx = Math.floor(Math.random() * world.cols);
+    const cy = Math.floor(Math.random() * world.rows);
+    const seeds = world.catastrophe.startFire(world, cx, cy);
+    logEvent('fire', `🔥 Wildfire ignited at (${cx},${cy}) — ${seeds} initial cells burning`);
+    if (renderer) renderer.draw();
+});
+const ECOLOGY_HINTS = {
+    soup:        'Fully random starting genomes — anything can happen.',
+    garden:      'Photosynthesizer-heavy, low predation. Lush and stable — until a predator mutates.',
+    battleground:'Predators and prey seeded in balance. Expect population boom-bust cycles.',
+    commune:     'Kin-tolerant cooperators cluster together. Mutualism vs. invasion pressure.',
+};
+
+document.querySelectorAll('.ecology-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.ecology-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('ecology-hint').textContent = ECOLOGY_HINTS[btn.dataset.ecology] || '';
+    });
+});
+
+// ── Movement mode toggle ──────────────────────────────────────────
+document.querySelectorAll('.movement-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.movement-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Movement scale applies live — no reset needed
+    });
+});
+
+// Randomize all parameters (population, solar, mutation rate, lifespan)
+document.getElementById('btn-rand-all').addEventListener('click', () => {
+    const randPop     = Math.round((Math.random() * 990 + 10) / 10) * 10;
+    const randSolar   = Math.round((Math.random() * 0.48 + 0.02) * 100) / 100;
+    const randMut     = Math.round((Math.random() * 0.149 + 0.001) * 1000) / 1000;
+    const randLife    = Math.round((Math.random() * 1950 + 50) / 50) * 50;
+
+    const setSlider = (id, valId, value, fmt) => {
+        const el = document.getElementById(id);
+        el.value = value;
+        document.getElementById(valId).textContent = fmt(value);
+    };
+    setSlider('sl-pop',      'val-pop',      randPop,   v => v);
+    setSlider('sl-solar',    'val-solar',    randSolar, v => parseFloat(v).toFixed(2));
+    setSlider('sl-mutrate',  'val-mutrate',  randMut,   v => parseFloat(v).toFixed(3));
+    setSlider('sl-lifespan', 'val-lifespan', randLife,  v => v);
+});
+
+// Range sliders → live value display
+const sliders = [
+    ['sl-speed',               'val-speed',               v => v],
+    ['sl-cols',                'val-cols',                v => v],
+    ['sl-rows',                'val-rows',                v => v],
+    ['sl-pop',                 'val-pop',                 v => v],
+    ['sl-solar',               'val-solar',               v => parseFloat(v).toFixed(2)],
+    ['sl-mutrate',             'val-mutrate',             v => parseFloat(v).toFixed(3)],
+    ['sl-lifespan',            'val-lifespan',            v => v],
+    ['sl-season-len',          'val-season-len',          v => v],
+    ['sl-weather-intensity',   'val-weather-intensity',   v => parseFloat(v).toFixed(2)],
+    ['sl-pathogen-virulence',  'val-pathogen-virulence',  v => parseFloat(v).toFixed(2)],
+    ['sl-pathogen-spread',     'val-pathogen-spread',     v => parseFloat(v).toFixed(2)],
+    ['sl-cata-radius',         'val-cata-radius',         v => v],
+    ['sl-fire-spread',         'val-fire-spread',         v => parseFloat(v).toFixed(2)],
+];
+// (sliders auto-read their HTML default values on input)
+
+for (const [id, valId, fmt] of sliders) {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(valId);
+    el.addEventListener('input', () => { valEl.textContent = fmt(el.value); });
+}
+
+// Click canvas to inspect organism (zoom-aware)
+canvas.addEventListener('click', (e) => {
+    if (!world || !renderer) return;
+    if (_panDrag) return; // was a drag, not a click
+    const rect = canvas.getBoundingClientRect();
+    // getBoundingClientRect reflects CSS transform, so dividing by rendered size
+    // gives us correct canvas coordinates regardless of zoom level
+    const px = (e.clientX - rect.left) * (canvas.width  / rect.width);
+    const py = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    const cx = Math.floor(px / renderer.cellSize);
+    const cy = Math.floor(py / renderer.cellSize);
+    const org = world.getCell(cx, cy);
+    if (org) {
+        selectedId = org.id;
+        const html = describeGenome(org);
+        openFloatInspector(html, e.clientX, e.clientY);
+    } else {
+        selectedId = null;
+        closeFloatInspector();
+    }
+});
+
+// ── Floating genome inspector ─────────────────────────────────────
+const floatInspector = document.getElementById('float-inspector');
+const floatBody      = document.getElementById('float-inspector-body');
+const floatHeader    = document.getElementById('float-inspector-header');
+
+function openFloatInspector(html, clickX, clickY) {
+    floatBody.innerHTML = html;
+    floatInspector.classList.add('visible');
+
+    // Position near the click, nudged so it doesn't overlap cursor
+    // and stays within viewport
+    const pad = 12;
+    const iw = floatInspector.offsetWidth  || 220;
+    const ih = floatInspector.offsetHeight || 300;
+    let left = clickX + 16;
+    let top  = clickY - 20;
+    if (left + iw > window.innerWidth  - pad) left = clickX - iw - 16;
+    if (top  + ih > window.innerHeight - pad) top  = window.innerHeight - ih - pad;
+    if (top  < pad) top = pad;
+    if (left < pad) left = pad;
+    floatInspector.style.left = left + 'px';
+    floatInspector.style.top  = top  + 'px';
+}
+
+function closeFloatInspector() {
+    floatInspector.classList.remove('visible');
+    // Don't clear selectedId — sidebar inspector stays live
+}
+
+document.getElementById('float-inspector-close').addEventListener('click', () => {
+    closeFloatInspector();
+    selectedId = null;
+});
+
+// Close float inspector when exiting focus mode
+const _origExitFocus = exitFocus;
+// (We'll inline this into exitFocus below instead of wrapping)
+
+// Drag the float inspector by its header
+let dragState = null;
+
+floatHeader.addEventListener('mousedown', (e) => {
+    if (e.target === document.getElementById('float-inspector-close')) return;
+    e.preventDefault();
+    const rect = floatInspector.getBoundingClientRect();
+    dragState = {
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: rect.left,
+        origTop:  rect.top,
+    };
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!dragState) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    const newLeft = Math.max(0, Math.min(window.innerWidth  - floatInspector.offsetWidth,  dragState.origLeft + dx));
+    const newTop  = Math.max(0, Math.min(window.innerHeight - floatInspector.offsetHeight, dragState.origTop  + dy));
+    floatInspector.style.left = newLeft + 'px';
+    floatInspector.style.top  = newTop  + 'px';
+});
+
+document.addEventListener('mouseup', () => { dragState = null; });
+
+// Touch drag support
+floatHeader.addEventListener('touchstart', (e) => {
+    if (e.target === document.getElementById('float-inspector-close')) return;
+    const t = e.touches[0];
+    const rect = floatInspector.getBoundingClientRect();
+    dragState = { startX: t.clientX, startY: t.clientY, origLeft: rect.left, origTop: rect.top };
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    if (!dragState) return;
+    const t = e.touches[0];
+    const dx = t.clientX - dragState.startX;
+    const dy = t.clientY - dragState.startY;
+    const newLeft = Math.max(0, Math.min(window.innerWidth  - floatInspector.offsetWidth,  dragState.origLeft + dx));
+    const newTop  = Math.max(0, Math.min(window.innerHeight - floatInspector.offsetHeight, dragState.origTop  + dy));
+    floatInspector.style.left = newLeft + 'px';
+    floatInspector.style.top  = newTop  + 'px';
+}, { passive: true });
+
+document.addEventListener('touchend', () => { dragState = null; });
+window.addEventListener('resize', () => {
+    resizeCharts();
+    if (inFocusMode) {
+        resizeCanvasToViewport();
+    } else {
+        if (renderer) renderer.resize();
+        if (world && renderer) renderer.draw();
+        fitToWindow();
+    }
+});
+
+// ── Collapsible sections ──────────────────────────────────────────
+document.querySelectorAll('.section-header').forEach(header => {
+    header.addEventListener('click', () => {
+        const sectionId = header.dataset.section;
+        const body   = document.getElementById('section-' + sectionId);
+        const toggle = document.getElementById('toggle-' + sectionId);
+        if (!body || !toggle) return;
+        const collapsed = body.classList.toggle('collapsed');
+        toggle.classList.toggle('collapsed', collapsed);
+    });
+});
+
+// ── Init on load ──────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

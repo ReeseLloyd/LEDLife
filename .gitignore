@@ -1,0 +1,5 @@
+# Old versioned files — kept locally for reference only
+_archive/
+
+# macOS
+.DS_Store
