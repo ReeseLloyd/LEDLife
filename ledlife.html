@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEDLife v0.17</title>
+    <title>LEDLife v0.18</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -915,6 +915,8 @@
         </div>
 
         <button id="btn-rand-all" class="btn-secondary" title="Randomize population, solar, mutation rate, and lifespan">🎰 Randomize Parameters</button>
+
+        <button id="btn-share" class="btn-secondary" title="Copy a URL that recreates this exact configuration">🔗 Copy Share Link</button>
 
         </div><!-- /section-simulation -->
 
@@ -2739,6 +2741,89 @@ let lastTick = 0;
 let rafId    = null;
 let selectedId = null;
 
+// ── URL share link ─────────────────────────────────────────────────
+// applyURLParams() — reads ?key=value pairs from the URL and pre-fills
+// all controls. Called once before init() so shared links restore fully.
+function applyURLParams() {
+    const p = new URLSearchParams(location.search);
+    if (!p.size) return;
+
+    const setSlider = (id, val) => {
+        if (val === null) return;
+        const el = document.getElementById(id);
+        if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
+    };
+    const setCheck = (id, val) => {
+        if (val === null) return;
+        const el = document.getElementById(id);
+        if (el) el.checked = val === '1';
+    };
+    // Activate the button matching data-attr=val within a CSS selector group
+    const setBtn = (groupSel, attr, val) => {
+        if (val === null) return;
+        const target = document.querySelector(`${groupSel}[${attr}="${val}"]`);
+        if (!target) return;
+        document.querySelectorAll(groupSel).forEach(b => b.classList.remove('active'));
+        target.classList.add('active');
+    };
+
+    if (p.has('seed'))  document.getElementById('inp-seed').value = p.get('seed');
+    setSlider('sl-cols',               p.get('cols'));
+    setSlider('sl-rows',               p.get('rows'));
+    setSlider('sl-pop',                p.get('pop'));
+    setSlider('sl-solar',              p.get('solar'));
+    setSlider('sl-mutrate',            p.get('mutrate'));
+    setSlider('sl-lifespan',           p.get('lifespan'));
+    setSlider('sl-speed',              p.get('speed'));
+    setSlider('sl-season-len',         p.get('season'));
+    setSlider('sl-weather-intensity',  p.get('wint'));
+    setSlider('sl-pathogen-virulence', p.get('vir'));
+    setSlider('sl-pathogen-spread',    p.get('spread'));
+    setSlider('sl-cata-radius',        p.get('meteor'));
+    setSlider('sl-fire-spread',        p.get('fire'));
+    setCheck('chk-glow',       p.get('glow'));
+    setCheck('chk-unlit',      p.get('unlit'));
+    setCheck('chk-trails',     p.get('trails'));
+    setCheck('chk-led-shapes', p.get('shapes'));
+    setCheck('chk-weather',    p.get('weather'));
+    setBtn('.ecology-btn',                          'data-ecology',  p.get('ecology'));
+    setBtn('.movement-toggle .movement-btn',        'data-movement', p.get('move'));
+    setBtn('#pathogen-target-toggle .movement-btn', 'data-ptarget',  p.get('ptarget'));
+}
+
+// buildShareURL() — serialises the current UI state into a URL string.
+// Every param here must have a matching reader in applyURLParams() above.
+function buildShareURL() {
+    const p = new URLSearchParams();
+    const g = id => document.getElementById(id)?.value;
+    const c = id => document.getElementById(id)?.checked ? '1' : '0';
+
+    p.set('seed',    g('inp-seed'));
+    p.set('cols',    g('sl-cols'));
+    p.set('rows',    g('sl-rows'));
+    p.set('pop',     g('sl-pop'));
+    p.set('solar',   g('sl-solar'));
+    p.set('mutrate', g('sl-mutrate'));
+    p.set('lifespan',g('sl-lifespan'));
+    p.set('speed',   g('sl-speed'));
+    p.set('ecology', document.querySelector('.ecology-btn.active')?.dataset.ecology || 'soup');
+    p.set('move',    document.querySelector('.movement-toggle .movement-btn.active')?.dataset.movement || 'hybrid');
+    p.set('glow',    c('chk-glow'));
+    p.set('unlit',   c('chk-unlit'));
+    p.set('trails',  c('chk-trails'));
+    p.set('shapes',  c('chk-led-shapes'));
+    p.set('weather', c('chk-weather'));
+    p.set('season',  g('sl-season-len'));
+    p.set('wint',    g('sl-weather-intensity'));
+    p.set('vir',     g('sl-pathogen-virulence'));
+    p.set('spread',  g('sl-pathogen-spread'));
+    p.set('ptarget', document.querySelector('#pathogen-target-toggle .movement-btn.active')?.dataset.ptarget || 'any');
+    p.set('meteor',  g('sl-cata-radius'));
+    p.set('fire',    g('sl-fire-spread'));
+
+    return `${location.origin}${location.pathname}?${p.toString()}`;
+}
+
 function getConfig() {
     const movementMode = document.querySelector('.movement-btn.active')?.dataset.movement || 'hybrid';
     const mobilityScale = movementMode === 'fixed' ? 0 : movementMode === 'hybrid' ? 0.4 : 1.0;
@@ -3053,6 +3138,20 @@ document.querySelectorAll('.movement-btn').forEach(btn => {
     });
 });
 
+// Share button — builds URL from current settings and copies to clipboard
+document.getElementById('btn-share').addEventListener('click', () => {
+    const url = buildShareURL();
+    const btn = document.getElementById('btn-share');
+    navigator.clipboard.writeText(url).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+    }).catch(() => {
+        // Fallback: show the URL in a prompt for manual copy
+        prompt('Copy this share link:', url);
+    });
+});
+
 // Randomize all parameters (population, solar, mutation rate, lifespan)
 document.getElementById('btn-rand-all').addEventListener('click', () => {
     const randPop     = Math.round((Math.random() * 990 + 10) / 10) * 10;
@@ -3226,6 +3325,7 @@ document.querySelectorAll('.section-header').forEach(header => {
 });
 
 // ── Init on load ──────────────────────────────────────────────────
+applyURLParams();
 init();
 </script>
 </body>

@@ -1,4 +1,4 @@
-# LEDLife v0.17
+# LEDLife v0.18
 
 A browser-based artificial life simulator with an LED dot-matrix aesthetic. Organisms are mobile agents on a fixed grid — each living cell is a glowing LED dot whose color encodes its genome-derived phenotype. The simulation runs an approximately energy-conserved economy with sexual and asexual reproduction, predation, defense, evolvable mutation rates, weather cycles, pathogens, and environmental catastrophes.
 
@@ -231,6 +231,7 @@ All settings are in the collapsible sidebar. Click any section header to collaps
 | Speed | 30 | Target ticks per second (1–120) |
 | Seed | random | Integer seed for the RNG. Same seed + settings = identical run. Click 🎲 to randomize. |
 | 🎰 Randomize Parameters | — | Randomizes population, solar intensity, mutation rate, and lifespan |
+| 🔗 Copy Share Link | — | Copies a URL encoding all current settings; opening it restores the exact configuration |
 
 ### World
 | Control | Default | Range | Notes |
@@ -402,6 +403,7 @@ Zoom range: 25%–800%. On load and resize, the view auto-fits so the full simul
 
 | Version | Summary |
 |---|---|
+| **v0.18** | Share link: 🔗 Copy Share Link button encodes all settings as URL parameters; opening the link restores the exact configuration and seed |
 | **v0.17** | Genome inspector swatch now renders the organism's LED shape (50% larger; uses CSS clip-path matching the canvas geometry); drop-shadow follows shape outline |
 | **v0.16** | LED shapes by strategy: organism dots now render as hexagon (autotroph), diamond (predator), square (defender), triangle (high-MOB), cross (high-KIN), or circle (generalist) based on dominant genome gene above 0.55; toggleable in Display settings |
 | **v0.15** | Pathogen: symptomatic organisms blocked from reproducing; incubating organisms 50% suppressed; light incubation energy drain added — outbreaks now crash populations rather than just taxing them. Wildfire: fire requires living fuel to spread; only spreads to fully unscorched cells — eliminates eternal re-ignition feedback loop; fires self-extinguish naturally |
