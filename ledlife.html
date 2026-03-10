@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEDLife v0.15</title>
+    <title>LEDLife v0.16</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1096,6 +1096,11 @@
             <label for="chk-trails">Energy trails (slow)</label>
         </div>
 
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="chk-led-shapes" checked>
+            <label for="chk-led-shapes">LED shapes by strategy</label>
+        </div>
+
         </div><!-- /section-display -->
 
         <hr class="separator">
@@ -1864,6 +1869,80 @@ function classifyStrategy(g) {
     return 'Generalist';
 }
 
+// ── LED shape from genome ──────────────────────────────────────────
+// Returns the dominant-strategy shape for an organism's genome.
+// The highest gene above the threshold wins; falls back to circle.
+// Priority order: PHOTO → PRED → DEF → MOB → KIN → circle
+function getShape(g) {
+    const T = 0.55;
+    let bestVal = -1, bestShape = 'circle';
+    const candidates = [
+        [g[GENE.PHOTO], 'hexagon'],
+        [g[GENE.PRED],  'diamond'],
+        [g[GENE.DEF],   'square'],
+        [g[GENE.MOB],   'triangle'],
+        [g[GENE.KIN],   'cross'],
+    ];
+    for (const [val, shape] of candidates) {
+        if (val > T && val > bestVal) { bestVal = val; bestShape = shape; }
+    }
+    return bestShape;
+}
+
+// ── LED shape drawing ──────────────────────────────────────────────
+// Draws a filled LED shape centered at (cx, cy) with "radius" r.
+// Cross uses two fillRect calls (no path needed); all others use a
+// single beginPath/fill so the caller must set fillStyle beforehand.
+function drawLEDShape(ctx, cx, cy, r, shape) {
+    if (shape === 'cross') {
+        const arm = r * 1.1, thick = r * 0.5;
+        ctx.fillRect(cx - arm,    cy - thick / 2, arm * 2, thick);
+        ctx.fillRect(cx - thick / 2, cy - arm,    thick,   arm * 2);
+        return;
+    }
+    ctx.beginPath();
+    switch (shape) {
+        case 'circle':
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            break;
+        case 'square': {
+            const s = r * 0.9;
+            ctx.rect(cx - s, cy - s, s * 2, s * 2);
+            break;
+        }
+        case 'diamond': {
+            const d = r * 1.15;
+            ctx.moveTo(cx,     cy - d);
+            ctx.lineTo(cx + d, cy);
+            ctx.lineTo(cx,     cy + d);
+            ctx.lineTo(cx - d, cy);
+            ctx.closePath();
+            break;
+        }
+        case 'hexagon': {
+            const hr = r * 1.05;
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const px = cx + hr * Math.cos(angle);
+                const py = cy + hr * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else         ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            break;
+        }
+        case 'triangle': {
+            const tr = r * 1.3;
+            ctx.moveTo(cx,               cy - tr);
+            ctx.lineTo(cx + tr * 0.866,  cy + tr * 0.5);
+            ctx.lineTo(cx - tr * 0.866,  cy + tr * 0.5);
+            ctx.closePath();
+            break;
+        }
+    }
+    ctx.fill();
+}
+
 // ── Organism ──────────────────────────────────────────────────────
 let oidCounter = 0;
 class Organism {
@@ -2225,8 +2304,9 @@ class Renderer {
         const ctx = this.ctx;
         const cs = this.cellSize;
         const w = this.world;
-        const showGlow = this.config.showGlow;
-        const showUnlit = this.config.showUnlit;
+        const showGlow   = this.config.showGlow;
+        const showUnlit  = this.config.showUnlit;
+        const showShapes = this.config.showLEDShapes;
         const cata = w.catastrophe;
         const pathogen = w.pathogen;
 
@@ -2315,12 +2395,11 @@ class Renderer {
             const cx = org.x * cs + cs / 2;
             const cy = org.y * cs + cs / 2;
             const energy = Math.max(0.1, org.energy);
+            const shape = showShapes ? getShape(org.genome) : 'circle';
 
             // Bright center
             ctx.fillStyle = `rgb(${Math.min(255, r + 60)},${Math.min(255, g + 60)},${Math.min(255, b + 60)})`;
-            ctx.beginPath();
-            ctx.arc(cx, cy, dotR * 0.45, 0, Math.PI * 2);
-            ctx.fill();
+            drawLEDShape(ctx, cx, cy, dotR * 0.45, shape);
 
             // Main dot
             // Incubating: slow dim pulse (hard to notice — that's the point)
@@ -2330,9 +2409,7 @@ class Renderer {
             else if (infected)  pulse = 0.55 + 0.35 * Math.sin(now / 180);
             else                pulse = 0.7 + energy * 0.3;
             ctx.fillStyle = `rgba(${r},${g},${b},${pulse})`;
-            ctx.beginPath();
-            ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
-            ctx.fill();
+            drawLEDShape(ctx, cx, cy, dotR, shape);
         }
     }
 }
@@ -2665,6 +2742,7 @@ function getConfig() {
         speed:         parseInt(document.getElementById('sl-speed').value),
         showGlow:      document.getElementById('chk-glow').checked,
         showUnlit:     document.getElementById('chk-unlit').checked,
+        showLEDShapes: document.getElementById('chk-led-shapes').checked,
         ecology:       document.querySelector('.ecology-btn.active')?.dataset.ecology || 'soup',
         movementMode,
         mobilityScale,

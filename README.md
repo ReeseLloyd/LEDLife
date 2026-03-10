@@ -1,4 +1,4 @@
-# LEDLife v0.15
+# LEDLife v0.16
 
 A browser-based artificial life simulator with an LED dot-matrix aesthetic. Organisms are mobile agents on a fixed grid — each living cell is a glowing LED dot whose color encodes its genome-derived phenotype. The simulation runs an approximately energy-conserved economy with sexual and asexual reproduction, predation, defense, evolvable mutation rates, weather cycles, pathogens, and environmental catastrophes.
 
@@ -8,7 +8,7 @@ Inspired by **Primordial Life** (Tim Hutton, 1996).
 
 ## Quick Start
 
-Open `ledlife-v0_15.html` in any modern browser. No build step, no dependencies, no server required. The simulation field auto-fits to the available display area on load. Click **▶ Start** to begin. Click any organism on the canvas to inspect its genome in a floating panel. Scroll/pinch to zoom; two-finger pan to navigate.
+Open `ledlife.html` in any modern browser. No build step, no dependencies, no server required. The simulation field auto-fits to the available display area on load. Click **▶ Start** to begin. Click any organism on the canvas to inspect its genome in a floating panel. Scroll/pinch to zoom; two-finger pan to navigate.
 
 ---
 
@@ -41,6 +41,8 @@ Single self-contained HTML file (~3140 lines). No external dependencies.
 | `genomeToBaseColor(g)` | Derives display hue from genome (predator→red, defender→blue, autotroph→green shift) |
 | `hueNicheBonus(h, g)` | Per-tick energy bonus from hue–niche alignment |
 | `classifyStrategy(g)` | Returns: Autotroph / Predator / Defender / Opportunist / Generalist |
+| `getShape(g)` | Returns LED shape for a genome: hexagon / diamond / square / triangle / cross / circle |
+| `drawLEDShape(ctx, cx, cy, r, shape)` | Fills the given LED shape centered at (cx, cy) with radius r |
 | `describeGenome(org)` | Returns HTML for the floating genome inspector |
 | `drawStrategyChart(canvas, history)` | Renders 3-line strategy balance chart |
 | `drawHueChart(canvas, world)` | Renders live hue diversity histogram |
@@ -270,6 +272,7 @@ Live charts and stat boxes. See **Population Charts** section below.
 | LED glow effect | on | Radial gradient behind each organism; disable for performance on large grids |
 | Show unlit panel dots | on | Dim dots at empty cells; creates the LED matrix look |
 | Energy trails (slow) | off | Fading energy traces; significant performance cost |
+| LED shapes by strategy | on | Each organism's dot shape reflects its dominant gene: hexagon=autotroph, diamond=predator, square=defender, triangle=mobile, cross=kin-social, circle=generalist |
 
 ### Weather
 | Control | Default | Range | Notes |
@@ -399,6 +402,7 @@ Zoom range: 25%–800%. On load and resize, the view auto-fits so the full simul
 
 | Version | Summary |
 |---|---|
+| **v0.16** | LED shapes by strategy: organism dots now render as hexagon (autotroph), diamond (predator), square (defender), triangle (high-MOB), cross (high-KIN), or circle (generalist) based on dominant genome gene above 0.55; toggleable in Display settings |
 | **v0.15** | Pathogen: symptomatic organisms blocked from reproducing; incubating organisms 50% suppressed; light incubation energy drain added — outbreaks now crash populations rather than just taxing them. Wildfire: fire requires living fuel to spread; only spreads to fully unscorched cells — eliminates eternal re-ignition feedback loop; fires self-extinguish naturally |
 | **v0.14** | Pathogen overhaul: energy drain raised 0.035→0.12; spread multiplier raised 0.08→0.35; incubation phase added (silent spread + yellow tinge before symptomatic die-off); renderer distinguishes incubating vs symptomatic states |
 | **v0.13** | Layout fixes: `html/body` locked to viewport height (window no longer scrolls); canvas `position:absolute` removes double-offset centering conflict; `fitToWindow()` deferred one rAF for accurate dimensions |
