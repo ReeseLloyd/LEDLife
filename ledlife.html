@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEDLife v0.16</title>
+    <title>LEDLife v0.17</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -726,11 +726,9 @@
         }
 
         .genome-swatch {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
+            width: 15px;
+            height: 15px;
             flex-shrink: 0;
-            box-shadow: 0 0 5px currentColor;
         }
 
         .genome-strategy {
@@ -2519,6 +2517,18 @@ function describeGenome(org) {
         0.25 + org.energy * 0.45);
     const swatchColor = `rgb(${r},${gg},${b})`;
 
+    // Clip-path style for each LED shape (mirrors drawLEDShape geometry)
+    const shape = getShape(g);
+    const clipStyles = {
+        circle:   'border-radius:50%',
+        square:   'border-radius:0',
+        diamond:  'border-radius:0;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)',
+        hexagon:  'border-radius:0;clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)',
+        triangle: 'border-radius:0;clip-path:polygon(50% 0%,100% 100%,0% 100%)',
+        cross:    'border-radius:0;clip-path:polygon(33% 0%,67% 0%,67% 33%,100% 33%,100% 67%,67% 67%,67% 100%,33% 100%,33% 67%,0% 67%,0% 33%,33% 33%)',
+    };
+    const swatchStyle = `background:${swatchColor};${clipStyles[shape]};filter:drop-shadow(0 0 3px ${swatchColor})`;
+
     // Build a bar row: label, value 0-1, bar color hex
     const row = (label, val, color = '#39ff14') => {
         const pct = Math.round(val * 100);
@@ -2535,7 +2545,7 @@ function describeGenome(org) {
 
     return `
     <div class="genome-header">
-        <div class="genome-swatch" style="background:${swatchColor};color:${swatchColor}"></div>
+        <div class="genome-swatch" style="${swatchStyle}"></div>
         <span class="genome-strategy">${strategy}</span>
         <div class="genome-meta">age ${org.age}<br>id ${org.id}</div>
     </div>
